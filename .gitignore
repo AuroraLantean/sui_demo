@@ -1,0 +1,9 @@
+debug/
+target/
+aarchives
+build
+examples
+.aptos
+.env*
+removed.rs
+zz*.sh
