@@ -8,18 +8,20 @@ all: clean remove install update build
 clean :; rm -r build
 format :; movefmt
 build :; sui move build
-build2 :; sui move build --named-addresses publisher=default
 test :; sui move test
-test2 :; sui move test --named-addresses publisher=default
+test2 :; sui move test counter
 
 check_tokens :; sui client balance
 get_tokens :; sui client faucet
 
+#Devnet data is wiped regularly as part of scheduled software updates. The data on Testnet persists through the regular update process, but might be wiped when necessary.
 setup_testnet :; sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443
+setup_devnet :; sui client new-env --alias devnet --rpc https://fullnode.devnet.sui.io:443
 
 activate_testnet :; sui client switch --env testnet
+activate_devnet :; sui client switch --env devnet
 
-publish :; sui client publish --gas-budget 50000000 # 20000000
+publish :; sui client publish --gas-budget 50000000 ./sources/counter.move
 
 mint :; sui client call --package 0xa85c6cc78f5723759ecb5568f625a9cd2315fedec651017af1508496994e0f29 --module sui_nft --function mint --args "Gold Coin1" "My first NFT on SUI Blockchain" --gas-budget 50000000
 

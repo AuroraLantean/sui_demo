@@ -4,7 +4,7 @@ version = "0.0.1"
 edition = "2024.beta"
 # edition = "legacy" to use legacy (pre-2024) Move
 # license = ""           # e.g., "MIT", "GPL", "Apache 2.0"
-# authors = ["..."]      # e.g., ["Joe Smith (joesmith@noemail.com)", "John Snow (johnsnow@noemail.com)"]
+# authors = "John Snow (johnsnow@noemail.com)"]
 published-at = "0x3fd25bdfab06b7e29a606fa2516655b48556ae8f1efda047a70ba929b2494919"
 
 [dependencies]
@@ -12,7 +12,7 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 # Revision can be a branch, a tag, and a commit hash; override = true
 
 [addresses]
-counter = "0x0"
+publisher = "0x0"
 #alice = "0xA11CE"
 
 [dev-addresses]
