@@ -4,9 +4,6 @@
 - the owner of the counter can reset it to any value
 */
 module publisher::counter {
-	//use std::string::{String, utf8};
-	//use std::debug::print;
-			
   /// A shared counter.
   public struct Counter has key {
     id: UID,
@@ -33,7 +30,9 @@ module publisher::counter {
     counter.value = value;
   }
 	
-	
+	#[test_only]
+	use std::string::{String, utf8};
+	use std::debug::print;	
   #[test(user1 = @0x123, user2 = @0x144)]
   fun counter_1(user1: signer) {
 		print(&utf8(b"--------== Test"));
