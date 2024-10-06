@@ -2,7 +2,7 @@
 // (https://examples.sui.io/samples/coin.html)
 // 
 // coin module: https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui-framework/coin.md
-module publisher::dragoncoin {
+module packagename::dragoncoin {
     
     use sui::coin;                          // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md
     // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md
@@ -15,7 +15,7 @@ module publisher::dragoncoin {
     public struct DRAGONCOIN has drop {}
 
     /// Module initializer is called once on module publish. A treasury cap is sent to the 
-    /// publisher, who then controls minting and burning
+    /// packagename, who then controls minting and burning
     //
     // coin::create_currency(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-create_currency
     // transfer::public_freeze_object(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md#function-public_freeze_object
@@ -36,8 +36,11 @@ module publisher::dragoncoin {
         //
         // Note: transfer::freeze_object() cannot be used since CoinMetadata is defined in another module
         transfer::public_freeze_object(metadata);
+
+				//Turn the given object into a mutable shared object that everyone can access and mutate.
+				//transfer::public_share_object(metadata);
         
-        // Send the TreasuryCap object to the publisher of the module
+        // Send the TreasuryCap object to the packagename of the module
         //
         // Note: transfer::transfer() cannot be used since TreasuryCap is defined in another module
         transfer::public_transfer(treasuryCap, tx_context::sender(ctx))
@@ -48,13 +51,14 @@ module publisher::dragoncoin {
     // transfer::public_transfer(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md#function-public_transfer
     public entry fun mint
     (
-        cap: &mut coin::TreasuryCap<publisher::dragoncoin::DRAGONCOIN>, 
+        cap: &mut coin::TreasuryCap<packagename::dragoncoin::DRAGONCOIN>, 
         recipient: address,
         amount: u64, 
         ctx: &mut tx_context::TxContext
     )
     {
-        // mint the new coin with the given amount
+				//coin::mint_and_transfer(cap, amount, recipient, ctx);
+
         let new_coin = internal_mint_coin(cap, amount, ctx);
 
         // transfer the new coin to the recipient
@@ -65,10 +69,10 @@ module publisher::dragoncoin {
     // coin::mint(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-mint
     fun internal_mint_coin
     (
-        cap: &mut coin::TreasuryCap<publisher::dragoncoin::DRAGONCOIN>, 
+        cap: &mut coin::TreasuryCap<packagename::dragoncoin::DRAGONCOIN>, 
         amount: u64, 
         ctx: &mut tx_context::TxContext
-    ): coin::Coin<publisher::dragoncoin::DRAGONCOIN>
+    ): coin::Coin<packagename::dragoncoin::DRAGONCOIN>
     { 
         coin::mint(cap, amount, ctx)
     }
@@ -76,8 +80,8 @@ module publisher::dragoncoin {
     // This function is an example of how internal_burn_coin() can be used.
     public entry fun burn
     (
-        cap: &mut coin::TreasuryCap<publisher::dragoncoin::DRAGONCOIN>, 
-        coin: coin::Coin<publisher::dragoncoin::DRAGONCOIN>
+        cap: &mut coin::TreasuryCap<packagename::dragoncoin::DRAGONCOIN>, 
+        coin: coin::Coin<packagename::dragoncoin::DRAGONCOIN>
     )
     {
         // Note: internal_burn_coin returns a u64 but it can be ignored since u64 has drop
@@ -85,13 +89,18 @@ module publisher::dragoncoin {
     }
     // This is the internal burn function. This function uses the Coin::burn function to take a coin and destroy it. The function returns the amount of the coin that was destroyed.
     //
-    // coin::burn(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-burn
+    // coin::burn(): hDRAGONCOINttps://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-burn
     fun internal_burn_coin
     (
-        cap: &mut coin::TreasuryCap<publisher::dragoncoin::DRAGONCOIN>, 
-        coin: coin::Coin<publisher::dragoncoin::DRAGONCOIN>
+        cap: &mut coin::TreasuryCap<packagename::dragoncoin::DRAGONCOIN>, 
+        coin: coin::Coin<packagename::dragoncoin::DRAGONCOIN>
     ): u64
     {
         coin::burn(cap, coin)
     }
+		
+		#[test_only]
+		public fun coin_init(ctx: &mut TxContext){
+			init(DRAGONCOIN{}, ctx);
+		}
 }

@@ -14,6 +14,13 @@ Storage rebates: The guide shows you best practices regarding storage fee rebate
 
 MEV attack protection: The guide introduces you to MEV attacks, how to make your contracts MEV-resistant, and the trade-offs between protection and user experience.
 
+#### Publish Coin
+```
+sui client publish --gas-budget 50000000 ./sources/coin.move
+```
+Check the transaction digest in Suivision.xyz
+Find the package and treasuryCap
+
 #### Fungible Coin
 Published txn: https://suiscan.xyz/testnet/tx/GHKRgALtKfdUKvsR7NQoP4Pzfa5nCLp32Cc5dYcU9Ay5
 

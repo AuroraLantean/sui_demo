@@ -10,6 +10,7 @@ format :; movefmt
 build :; sui move build
 test :; sui move test
 test2 :; sui move test counter
+test3 :; sui move test coin
 
 check_tokens :; sui client balance
 get_tokens :; sui client faucet

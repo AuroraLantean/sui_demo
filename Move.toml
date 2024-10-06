@@ -1,24 +1,26 @@
 [package]
-name = "sui-demo"
+name = "packagename"
 version = "0.0.1"
 edition = "2024.beta"
 # edition = "legacy" to use legacy (pre-2024) Move
 # license = ""           # e.g., "MIT", "GPL", "Apache 2.0"
 # authors = "John Snow (johnsnow@noemail.com)"]
-published-at = "0x3fd25bdfab06b7e29a606fa2516655b48556ae8f1efda047a70ba929b2494919"
+published-at = "0x004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "main" }
 # Revision can be a branch, a tag, and a commit hash; override = true
 
 [addresses]
-publisher = "0x0"
+packagename = "0x0"
 #alice = "0xA11CE"
 
 [dev-addresses]
 # The dev-addresses section allows overwriting named addresses for the `--test`
 # and `--dev` modes.
 # alice = "0xB0B"
+#package:0x004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25
+#TreasureCap:0x9127f84335a492a8b6784c1a684724be164caa5e5556b52c9b2b39f0de098921
 
 [dev-dependencies]
 # The dev-dependencies section allows overriding dependencies for `--test` and
