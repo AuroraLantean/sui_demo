@@ -5,13 +5,14 @@ edition = "2024.beta"
 # edition = "legacy" to use legacy (pre-2024) Move
 # license = ""           # e.g., "MIT", "GPL", "Apache 2.0"
 # authors = "John Snow (johnsnow@noemail.com)"]
-published-at = "0x004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
+#published-at = "0x004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "main" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet" }
 # Revision can be a branch, a tag, and a commit hash; override = true
 
 [addresses]
+#packagename = "004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
 packagename = "0x0"
 #alice = "0xA11CE"
 

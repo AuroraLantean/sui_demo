@@ -19,6 +19,8 @@ activate_testnet :; sui client switch --env testnet
 activate_devnet :; sui client switch --env devnet
 
 publish_coin1 :; sui client publish --gas-budget 50000000 ./sources/coin.move
+publish :; sui client publish --gas-budget 50000000 
+#./sources/calculator.move
 
 suiscan :; echo "https://suivision.xyz/"
 
