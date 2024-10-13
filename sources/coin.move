@@ -31,6 +31,7 @@ module packagename::dragoncoin {
             /*icon_url=*/option::some<Url>(url::new_unsafe_from_bytes(b"https://peach-tough-crayfish-991.mypinata.cloud/ipfs/QmQyp2CSEi4m5YYfexrXM7TZzxXRfmrsqoasyBQwLxKY9q")), 
             /*ctx=*/ctx
         );
+				//let (treasury, deny_cap, metadata) = coin::create_regulated_currency_v2(..)
         
         // Freezes the object so the object becomes immutable, and non transferable
         //
@@ -40,9 +41,9 @@ module packagename::dragoncoin {
 				//Turn the given object into a mutable shared object that everyone can access and mutate.
 				//transfer::public_share_object(metadata);
         
-        // Send the TreasuryCap object to the packagename of the module
-        //
-        // Note: transfer::transfer() cannot be used since TreasuryCap is defined in another module
+				//transfer::public_transfer(deny_cap, ctx.sender());
+        
+				// Send the TreasuryCap object to the publisher. Note: transfer::transfer() cannot be used since TreasuryCap is defined in another module
         transfer::public_transfer(treasuryCap, tx_context::sender(ctx))
     }
 
@@ -99,6 +100,25 @@ module packagename::dragoncoin {
         coin::burn(cap, coin)
     }
 		
+		/*//docs::/#regulate}
+    public fun add_addr_from_deny_list(
+        denylist: &mut DenyList,
+        denycap: &mut DenyCapV2<REGCOIN>,
+        denyaddy: address,
+        ctx: &mut TxContext,
+    ) {
+        coin::deny_list_v2_add(denylist, denycap, denyaddy, ctx);
+    }
+
+    public fun remove_addr_from_deny_list(
+        denylist: &mut DenyList,
+        denycap: &mut DenyCapV2<REGCOIN>,
+        denyaddy: address,
+        ctx: &mut TxContext,
+    ) {
+        coin::deny_list_v2_remove(denylist, denycap, denyaddy, ctx);
+    }*/
+
 		#[test_only]
 		public fun coin_init(ctx: &mut TxContext){
 			init(DRAGONCOIN{}, ctx);

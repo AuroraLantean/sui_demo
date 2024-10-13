@@ -12,10 +12,11 @@ test :; sui move test
 test2 :; sui move test counter
 test3 :; sui move test coin
 
-check_tokens :; sui client balance
-get_tokens :; sui client faucet
-
-make_new_addr :; sui client new-address ed25519
+new_addr :; sui client new-address ed25519
+activate_addr :; sui client active-address
+switch :; sui client switch --address YOUR_ADDRESS
+balance :; sui client balance
+faucet :; sui client faucet
 activate_testnet :; sui client switch --env testnet
 activate_devnet :; sui client switch --env devnet
 
