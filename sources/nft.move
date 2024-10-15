@@ -1,5 +1,5 @@
 //https://examples.sui.io/samples/nft.html
-module packagename::nft {
+module package_addr::nft {
     use std::string::String;//utf8
     use sui::event;
 		//use std::debug::print;

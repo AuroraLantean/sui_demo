@@ -2,7 +2,7 @@
 // (https://examples.sui.io/samples/coin.html)
 // 
 // coin module: https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui-framework/coin.md
-module packagename::dragoncoin {
+module package_addr::dragoncoin {
     
     use sui::coin;                          // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md
     // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md
@@ -15,7 +15,7 @@ module packagename::dragoncoin {
     public struct DRAGONCOIN has drop {}
 
     /// Module initializer is called once on module publish. A treasury cap is sent to the 
-    /// packagename, who then controls minting and burning
+    /// package_addr, who then controls minting and burning
     //
     // coin::create_currency(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-create_currency
     // transfer::public_freeze_object(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md#function-public_freeze_object
@@ -52,7 +52,7 @@ module packagename::dragoncoin {
     // transfer::public_transfer(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md#function-public_transfer
     public entry fun mint
     (
-        cap: &mut coin::TreasuryCap<packagename::dragoncoin::DRAGONCOIN>, 
+        cap: &mut coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>, 
         recipient: address,
         amount: u64, 
         ctx: &mut tx_context::TxContext
@@ -70,10 +70,10 @@ module packagename::dragoncoin {
     // coin::mint(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-mint
     fun internal_mint_coin
     (
-        cap: &mut coin::TreasuryCap<packagename::dragoncoin::DRAGONCOIN>, 
+        cap: &mut coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>, 
         amount: u64, 
         ctx: &mut tx_context::TxContext
-    ): coin::Coin<packagename::dragoncoin::DRAGONCOIN>
+    ): coin::Coin<package_addr::dragoncoin::DRAGONCOIN>
     { 
         coin::mint(cap, amount, ctx)
     }
@@ -81,8 +81,8 @@ module packagename::dragoncoin {
     // This function is an example of how internal_burn_coin() can be used.
     public entry fun burn
     (
-        cap: &mut coin::TreasuryCap<packagename::dragoncoin::DRAGONCOIN>, 
-        coin: coin::Coin<packagename::dragoncoin::DRAGONCOIN>
+        cap: &mut coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>, 
+        coin: coin::Coin<package_addr::dragoncoin::DRAGONCOIN>
     )
     {
         // Note: internal_burn_coin returns a u64 but it can be ignored since u64 has drop
@@ -93,8 +93,8 @@ module packagename::dragoncoin {
     // coin::burn(): hDRAGONCOINttps://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-burn
     fun internal_burn_coin
     (
-        cap: &mut coin::TreasuryCap<packagename::dragoncoin::DRAGONCOIN>, 
-        coin: coin::Coin<packagename::dragoncoin::DRAGONCOIN>
+        cap: &mut coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>, 
+        coin: coin::Coin<package_addr::dragoncoin::DRAGONCOIN>
     ): u64
     {
         coin::burn(cap, coin)

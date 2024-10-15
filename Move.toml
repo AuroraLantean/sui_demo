@@ -13,7 +13,7 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 
 [addresses]
 #packagename = "004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
-packagename = "0x0"
+package_addr = "0x0"
 #alice = "0xA11CE"
 
 [dev-addresses]

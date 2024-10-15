@@ -1,4 +1,4 @@
-module packagename::staking {
+module package_addr::staking {
 	use std::string::{utf8, String};
 	
 	public struct STAKING has drop {}

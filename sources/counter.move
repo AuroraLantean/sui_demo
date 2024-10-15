@@ -4,7 +4,7 @@
 - the owner of the counter can reset it to any value
 */
 //module package_name::module_name {}
-module packagename::counter {
+module package_addr::counter {
   public struct Counter has key {
     id: UID,
     owner: address,
@@ -60,9 +60,9 @@ module packagename::counter {
 }
 
 #[test_only]
-module packagename::counter_test {
+module package_addr::counter_test {
     use sui::test_scenario as ts;
-    use packagename::counter::{Self, Counter};
+    use package_addr::counter::{Self, Counter};
 
     #[test]
     fun counter_1() {

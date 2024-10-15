@@ -1,4 +1,4 @@
-module packagename::calculator {
+module package_addr::calculator {
 	public struct Output has key, store{
         id: UID,
         result: u64,
