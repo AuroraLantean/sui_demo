@@ -5,6 +5,8 @@ module package_addr::gameMarket {
 	use sui::bag::{Self, Bag};
 	use sui::table::{Self, Table};
 
+	//sui client publish --gas-budget 10000000000
+	
 	//Shared Object. Anyone can make this object with specified coin type
 	public struct GameMarket<phantom COIN> has key {
 		id: UID,
@@ -30,7 +32,7 @@ module package_addr::gameMarket {
 	}
 	
 	//List an item in the GameMarket
-	public entry fun list<T: key + store, COIN>(
+	public entry fun list_item<T: key + store, COIN>(
 		gameMarket: &mut GameMarket<COIN>,
 		item: T, ask: u64, ctx: &mut TxContext
 	){
@@ -89,5 +91,10 @@ module package_addr::gameMarket {
 	public entry fun buy_and_take<T: key + store, COIN>(gameMarket: &mut GameMarket<COIN>, item_id: ID, paid: Coin<COIN>, ctx: &mut TxContext){
 		let obj = buy<T, COIN>(gameMarket, item_id, paid);
 		transfer::public_transfer(obj, tx_context::sender(ctx));
+	}
+	
+	//Internal function to take profits from selling items
+	public fun withdraw<COIN>(gameMarket: &mut GameMarket<COIN>, ctx: &TxContext): Coin<COIN>{
+		table::remove<address, Coin<COIN>>(&mut gameMarket.payments, tx_context::sender(ctx))
 	}
 }

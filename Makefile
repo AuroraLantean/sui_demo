@@ -35,6 +35,19 @@ mint_nft :; sui client call --package $(package) --module nft --function mint --
 
 transfer_nft :; sui client call --package $(package) --module nft --function transfer --args 0x60d5a4b75015fc13275b0d6f844e3048f226af612894d0dcf61e0fac26333360 ${wallet2} --gas-budget 500000000
 
+new_market :; sui client call --function new --module gameMarket --package $(package) --type-args 0x2::sui::SUI --gas-budget 10000000000
+marketId=0x123Abc
+new_widget :; sui client call --function mint --module marketWidget --package $(package) --gas--budget 10000000000
+
+list_item :; sui client call --function list_item --module gameMarket --package $(package) --args $(marketId) $(itemId) 1 --type-args $(package)::widget::Widget 0x2::sui::SUI --gas-budget 10000000000
+
+split :; sui client split-coin --coin-id Coin_Object_Id --amounts 1 --gas-budget 10000000000
+
+buy_widget :; sui client call --function buy_and_take --module gameMarket --package $(package) --args $(marketId) $(itemId) $(paymentId) --type-args $(package)::widget::Widget 0x2::sui::SUI --gas-budget 10000000000
+
+withdraw :; sui client call --function buy_and_take --module gameMarket --package $(package) --args $(marketId) --type-args 0x2::sui::SUI --gas-budget 10000000000
+
+
 addItem :; sui move run --function-id "0x_publisher_address::advanced_list::add_item"
 
 getListCounter :; sui move view --function-id "0x_publisher_address::advanced_list::get_list_counter" --args address:0x_publisher_address
