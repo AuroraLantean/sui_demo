@@ -63,4 +63,31 @@ module package_addr::gameMarket {
 		let item = delist<T, COIN>(gameMarket, item_id, ctx);
 		transfer::public_transfer(item, tx_context::sender(ctx));
 	}
+
+	// Internal function to buy an item using a known GameListing. Payment is done in Coin<COIN>. Amount paid must match the requested amount. Item seller gets the payment.
+	fun buy<T: key + store, COIN>(gameMarket: &mut GameMarket<COIN>, item_id: ID, paid: Coin<COIN>): T {
+		let GameListing {
+			id, ask, owner
+		} = bag::remove(&mut gameMarket.gameItems, item_id);
+		
+		assert!(ask == coin::value(&paid), EAmountIncorrect);
+		
+		//Check if there is already a Coin hanging and merge `paid` with it. Otherwise, attach `paid` to the `GameMarket` under owner's `address`
+		let isFound = table::contains<address, Coin<COIN>>(&gameMarket.payments, owner);
+		if(isFound){
+			coin::join(table::borrow_mut<address, Coin<COIN>>(&mut gameMarket.payments, owner), paid);
+		} else {
+			table::add(&mut gameMarket.payments, owner, paid);
+		};
+		let mut idmut = id;
+		let item = ofield::remove(&mut idmut, true);
+		object::delete(idmut);
+		item
+	}
+	
+	// Call `buy` and transfer item to the sender
+	public entry fun buy_and_take<T: key + store, COIN>(gameMarket: &mut GameMarket<COIN>, item_id: ID, paid: Coin<COIN>, ctx: &mut TxContext){
+		let obj = buy<T, COIN>(gameMarket, item_id, paid);
+		transfer::public_transfer(obj, tx_context::sender(ctx));
+	}
 }
