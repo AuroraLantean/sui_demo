@@ -1,5 +1,5 @@
 /*
-- anyone can create and share a counter
+- anyone can make and share a counter
 - everyone can increment a counter by 1
 - the owner of the counter can reset it to any value
 */
@@ -26,14 +26,14 @@ module package_addr::counter {
   public fun value(counter: &Counter): u64 {
       counter.value
   }
-  public fun create(ctx: &mut TxContext) {
+  public fun make_counter(ctx: &mut TxContext) {
       transfer::share_object(Counter {
           id: object::new(ctx),
           owner: tx_context::sender(ctx),
           value: 0
       })
   }
-  public fun delete(counter: Counter, ctx: &TxContext) {
+  public fun delete_counter(counter: Counter, ctx: &TxContext) {
       assert!(counter.owner == ctx.sender(), 0);
       let Counter {id, owner:_, value:_} = counter;
       id.delete();
@@ -71,26 +71,26 @@ module package_addr::counter_test {
         let user1 = @0xA1;
 
         let mut ts = ts::begin(user1);
-
+				// make counter
         {
             ts.next_tx(owner);
-            counter::create(ts.ctx());
+            counter::make_counter(ts.ctx());
         };
 
+				// read counter
         {
             ts.next_tx(user1);
             let mut counter: Counter = ts.take_shared();
 
             assert!(counter.owner() == owner);
             assert!(counter.value() == 0);
-
             counter.increment();
             counter.increment();
             counter.increment();
-
             ts::return_shared(counter);
         };
 
+				// update counter
         {
             ts.next_tx(owner);
             let mut counter: Counter = ts.take_shared();
@@ -99,7 +99,6 @@ module package_addr::counter_test {
             assert!(counter.value() == 3);
 
             counter.set_value(100, ts.ctx());
-
             ts::return_shared(counter);
         };
 
@@ -112,10 +111,15 @@ module package_addr::counter_test {
 
             counter.increment();
             assert!(counter.value() == 101);
-
             ts::return_shared(counter);
         };
 
+				// delete counter
+        {
+            ts.next_tx(owner);
+            let counter: Counter = ts.take_shared();
+            counter.delete_counter(ts.ctx());
+        };
         ts.end();
     }
 }
