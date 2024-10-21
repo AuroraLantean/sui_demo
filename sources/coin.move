@@ -8,7 +8,8 @@ module package_addr::dragoncoin {
     // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md
     use sui::url::{Self, Url};              // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/url.md
     // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/tx_context.md
-
+		use std::string::String;
+		use std::ascii;
     /// The type identifier of coin. The coin will have a type tag of kind: 
     /// `Coin<package_object::dragoncoin::DRAGONCOIN>`
     /// Make sure that the name of the type matches the module's name.
@@ -23,12 +24,11 @@ module package_addr::dragoncoin {
     fun init( witness: DRAGONCOIN, ctx: &mut TxContext) {
         // Function interface: public fun create_currency<T: drop>(witness: T, decimals: u8, symbol: vector<u8>, name: vector<u8>, description: vector<u8>, icon_url: option::Option<url::Url>, ctx: &mut tx_context::TxContext): (coin::TreasuryCap<T>, coin::CoinMetadata<T>)
         let (treasuryCap, metadata) = coin::create_currency(
-            /*witnes=*/witness, 
-            /*decimals=*/6, 
-            /*symbol=*/b"DRAG", 
-            /*name=*/b"Dragon coin", 
-            /*description=*/b"Dragon coin is the one coin to rule them all", 
-            /*icon_url=*/option::some<Url>(url::new_unsafe_from_bytes(b"https://peach-tough-crayfish-991.mypinata.cloud/ipfs/QmQyp2CSEi4m5YYfexrXM7TZzxXRfmrsqoasyBQwLxKY9q")), 
+            witness, 
+            6, 
+            b"DRAG", 
+            b"Dragon coin", 
+            b"Dragon coin is the one coin to rule them all", option::some<Url>(url::new_unsafe_from_bytes(b"icon_url"),), 
             /*ctx=*/ctx
         );
 				//let (treasury, deny_cap, metadata) = coin::create_regulated_currency_v2(..)
@@ -36,7 +36,8 @@ module package_addr::dragoncoin {
         // Freezes the object so the object becomes immutable, and non transferable
         //
         // Note: transfer::freeze_object() cannot be used since CoinMetadata is defined in another module
-        transfer::public_freeze_object(metadata);
+				transfer::public_transfer(metadata, tx_context::sender(ctx));
+        //transfer::public_freeze_object(metadata);
 
 				//Turn the given object into a mutable shared object that everyone can access and mutate.
 				//transfer::public_share_object(metadata);
@@ -100,6 +101,25 @@ module package_addr::dragoncoin {
         coin::burn(cap, coin)
     }
 		
+		public fun get_total_supply(cap: & coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>): u64 {
+			coin::total_supply(cap)
+		}
+		public fun get_decimals(metadata: & coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>): u8 {
+			coin::get_decimals(metadata)
+		}
+		public fun get_name(metadata: & coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>): String {
+			coin::get_name(metadata)
+		}
+		public fun get_symbol(metadata: & coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>): ascii::String {
+			coin::get_symbol(metadata)
+		}
+		public fun get_description(metadata: & coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>): String {
+			coin::get_description(metadata)
+		}
+		public fun get_icon_url(metadata: & coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>): Option<sui::url::Url> {
+			coin::get_icon_url(metadata)
+		}
+		
 		/*//docs::/#regulate}
     public fun add_addr_from_deny_list(
         denylist: &mut DenyList,
@@ -119,8 +139,65 @@ module package_addr::dragoncoin {
         coin::deny_list_v2_remove(denylist, denycap, denyaddy, ctx);
     }*/
 
-		#[test_only]
-		public fun coin_init(ctx: &mut TxContext){
-			init(DRAGONCOIN{}, ctx);
-		}
+	#[test_only]
+	use std::string::utf8;
+
+	#[test]
+	public fun test_coin(){
+		use sui::test_scenario as ts;
+		use std::debug::print as p;
+		
+		let admin: address = @0xA00;
+		let user1: address = @0x001;
+    let mut scenario_val = ts::begin(admin);
+    let sn = &mut scenario_val;
+		{
+			init(DRAGONCOIN{}, ts::ctx(sn));
+		};
+		
+		//check the cap
+		ts::next_tx(sn, admin);
+		{
+			let cap = ts::take_from_sender<coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>>(sn);
+			let total_supply = get_total_supply(&cap);
+			p(&total_supply);
+			assert!(total_supply == 0, 1);
+			
+			let amount = 1000;
+			let mut capm = cap;
+			mint(&mut capm, user1, amount, ts::ctx(sn));
+			
+			let total_supply = get_total_supply(&capm);
+			p(&total_supply);
+			assert!(total_supply == amount, 1);
+			ts::return_to_sender(sn, capm);
+		};
+		//check the cap
+		ts::next_tx(sn, admin);
+		{
+			let metadata = ts::take_from_sender<coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>>(sn);
+			let decimals = get_decimals(&metadata);
+			p(&decimals);
+			assert!(decimals == 6, 1);
+
+			let name = get_name(&metadata);
+			p(&name);
+			assert!(name == utf8(b"Dragon coin"), 1);
+
+			let descriptn = get_description(&metadata);
+			p(&descriptn);
+			assert!(descriptn == utf8(b"Dragon coin is the one coin to rule them all"), 1);
+
+			let url = get_icon_url(&metadata).extract().inner_url();//sui::url::Url
+			p(&url);
+			assert!(url == (b"icon_url").to_ascii_string(), 1);
+
+			let symbol = get_symbol(&metadata);
+			p(&symbol);
+			assert!(symbol == (b"DRAG").to_ascii_string(), 1);
+			
+			ts::return_to_sender(sn, metadata);
+		};
+		ts::end(scenario_val);
+	}
 }

@@ -79,7 +79,6 @@ module package_addr::nft {
 		
 		let admin: address = @0xA00;
 		let user1: address = @0x001;
-		let user2: address = @0x002;
     let mut scenario_val = ts::begin(admin);
     let sn = &mut scenario_val;
 		//make sword
