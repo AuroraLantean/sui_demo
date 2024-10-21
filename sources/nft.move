@@ -67,4 +67,56 @@ module package_addr::nft {
 
     /// Get the Nft's `url`
     public fun url(nft: &Nft): String { nft.url }
+		
+
+	#[test_only]
+	use std::string::utf8;
+
+	#[test]
+	public fun test_nft() {
+		use sui::test_scenario as ts;
+		use std::debug::print as p;
+		
+		let admin: address = @0xA00;
+		let user1: address = @0x001;
+		let user2: address = @0x002;
+    let mut scenario_val = ts::begin(admin);
+    let sn = &mut scenario_val;
+		//make sword
+		ts::next_tx(sn, admin);
+		{
+			mint(utf8(b"nft_name"),
+			vector[utf8(b"cat"), utf8(b"hungry"), utf8(b"sleepy")],
+			utf8(b"nft.com"),ts::ctx(sn));
+		};
+
+		// transfer the sword from admin to user1
+		ts::next_tx(sn, admin);
+		{
+			let nft = ts::take_from_sender<Nft>(sn);
+			assert!(name(&nft) == utf8(b"nft_name"), 1);
+			p(&url(&nft));
+			assert!(url(&nft) == utf8(b"nft.com"), 1);
+
+			p(traits(&nft));
+			assert!(traits(&nft) == vector[utf8(b"cat"), utf8(b"hungry"), utf8(b"sleepy")], 1);
+
+			transfer(nft, user1);
+		};
+		
+		ts::next_tx(sn, user1);
+		{
+			let mut nft = ts::take_from_sender<Nft>(sn);
+			set_url(&mut nft, utf8(b"nft2.com"));
+			ts::return_to_sender(sn, nft);
+		};
+
+		ts::next_tx(sn, user1);
+		{
+			let mut nft = ts::take_from_sender<Nft>(sn);
+			destroy(nft);
+		};
+//https://github.com/movebit/sui-course-2023/blob/main/part-5/lesson-1/src/nft-example/sources/artwork.move
+		ts::end(scenario_val);
+	}
 }

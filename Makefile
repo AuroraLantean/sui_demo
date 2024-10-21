@@ -12,6 +12,7 @@ test :; sui move test
 test_s :; sui move test -s
 test_counter :; sui move test counter
 test_sword :; sui move test sword
+test_nft :; sui move test nft
 
 new_addr :; sui client new-address ed25519
 activate_addr :; sui client active-address
