@@ -59,6 +59,7 @@ module package_addr::counter {
   }*/
 }
 
+//sui move test counter -s
 #[test_only]
 module package_addr::counter_test {
     use sui::test_scenario as ts;

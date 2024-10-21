@@ -9,8 +9,9 @@ clean :; rm -r build
 format :; movefmt
 build :; sui move build
 test :; sui move test
-test2 :; sui move test counter
-test3 :; sui move test coin
+test_s :; sui move test -s
+test_counter :; sui move test counter
+test_sword :; sui move test sword
 
 new_addr :; sui client new-address ed25519
 activate_addr :; sui client active-address
