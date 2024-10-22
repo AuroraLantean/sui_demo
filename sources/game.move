@@ -64,7 +64,7 @@ module package_addr::game {
 	#[test]
 	public fun test_sword2() {
 		use sui::test_scenario as ts;
-		let admin: address = @0xA00;
+		let admin: address = @0xA;
 		let user1: address = @0x001;
 		let user2: address = @0x002;
 		

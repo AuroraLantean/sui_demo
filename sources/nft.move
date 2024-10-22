@@ -77,7 +77,7 @@ module package_addr::nft {
 		use sui::test_scenario as ts;
 		use std::debug::print as p;
 		
-		let admin: address = @0xA00;
+		let admin: address = @0xA;
 		let user1: address = @0x001;
     let mut scenario_val = ts::begin(admin);
     let sn = &mut scenario_val;
