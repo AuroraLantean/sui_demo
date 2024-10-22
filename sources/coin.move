@@ -120,6 +120,10 @@ module package_addr::dragoncoin {
 			coin::get_icon_url(metadata)
 		}
 		
+		public fun update_description(treasury_cap: & coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>, metadata: &mut coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>, description_new: String) {
+			coin::update_description(treasury_cap, metadata, description_new)
+		}
+		
 		/*//docs::/#regulate}
     public fun add_addr_from_deny_list(
         denylist: &mut DenyList,
@@ -158,21 +162,21 @@ module package_addr::dragoncoin {
 		//check the cap
 		ts::next_tx(sn, admin);
 		{
-			let cap = ts::take_from_sender<coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>>(sn);
+			let mut cap = ts::take_from_sender<coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>>(sn);
 			let total_supply = get_total_supply(&cap);
 			p(&total_supply);
 			assert!(total_supply == 0, 1);
 			
 			let amount = 1000;
-			let mut capm = cap;
-			mint(&mut capm, user1, amount, ts::ctx(sn));
+			mint(&mut cap, user1, amount, ts::ctx(sn));
 			
-			let total_supply = get_total_supply(&capm);
+			let total_supply = get_total_supply(&cap);
 			p(&total_supply);
 			assert!(total_supply == amount, 1);
-			ts::return_to_sender(sn, capm);
+			ts::return_to_sender(sn, cap);
 		};
-		//check the cap
+		
+		//check the metadata
 		ts::next_tx(sn, admin);
 		{
 			let metadata = ts::take_from_sender<coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>>(sn);
@@ -196,6 +200,18 @@ module package_addr::dragoncoin {
 			p(&symbol);
 			assert!(symbol == (b"DRAG").to_ascii_string(), 1);
 			
+			ts::return_to_sender(sn, metadata);
+		};
+		
+		//update the metadata
+		ts::next_tx(sn, admin);
+		{
+			let cap = ts::take_from_sender<coin::TreasuryCap<package_addr::dragoncoin::DRAGONCOIN>>(sn);
+			let mut metadata = ts::take_from_sender<coin::CoinMetadata<package_addr::dragoncoin::DRAGONCOIN>>(sn);
+			let new_description = utf8(b"new_description");
+			update_description(&cap, &mut metadata, new_description);
+			
+			ts::return_to_sender(sn, cap);
 			ts::return_to_sender(sn, metadata);
 		};
 		ts::end(scenario_val);

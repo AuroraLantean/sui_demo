@@ -112,7 +112,7 @@ module package_addr::nft {
 
 		ts::next_tx(sn, user1);
 		{
-			let mut nft = ts::take_from_sender<Nft>(sn);
+			let nft = ts::take_from_sender<Nft>(sn);
 			destroy(nft);
 		};
 //https://github.com/movebit/sui-course-2023/blob/main/part-5/lesson-1/src/nft-example/sources/artwork.move
