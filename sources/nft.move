@@ -2,6 +2,7 @@
 module package_addr::nft {
     use std::string::String;//utf8
     use sui::event;
+		//use sui::url::{Self, Url};  
 		//use std::debug::print;
     //use std::error;
     //use std::timestamp;
@@ -10,8 +11,9 @@ module package_addr::nft {
     public struct Nft has key, store {
         id: UID,
         name: String,
+				description: String,
         traits: vector<String>,
-        url: String,
+        url: String,//Url
     }
 
     public struct MintEvent has copy, drop {
@@ -23,6 +25,7 @@ module package_addr::nft {
 
     public entry fun mint(
         name: String,
+				description: String,
         traits: vector<String>,
         url: String,
         ctx: &mut TxContext
@@ -34,7 +37,8 @@ module package_addr::nft {
             minted_by: ctx.sender(),
         });
 
-        let nft = Nft { id, name, traits, url };
+        let nft = Nft { id, name, description, traits, url };
+				//url::new_unsafe_from_bytes(b"icon_url")
 				transfer::public_transfer(nft, ctx.sender());
     }
 
@@ -42,31 +46,28 @@ module package_addr::nft {
         transfer::public_transfer(nft, recipient);
     }
 		
-    // owner can add a new trait
-    public fun add_trait(nft: &mut Nft, trait: String) {
+    //------== Only by Owner
+    public entry fun add_trait(nft: &mut Nft, trait: String) {
         nft.traits.push_back(trait);
     }
-
-    // owners can change the image
-    public fun set_url(nft: &mut Nft, url: String) {
+    public entry fun update_url(nft: &mut Nft, url: String) {
         nft.url = url;
     }
-
-    /// owner can destroy the NFT and get a storage rebate
-    public fun destroy(nft: Nft) {
-        let Nft { id, url: _, name: _, traits: _ } = nft;
+    public entry fun update_description(nft: &mut Nft, new_description: String) {
+        nft.description = new_description;
+    }
+    public entry fun burn(nft: Nft) {
+        let Nft { id, description: _, url: _, name: _, traits: _ } = nft;
         id.delete()
     }
-
-    // Getters for object fields/properties because they are private by default
-    /// Get the Nft's `name`
+		//------== 
+    
+		// Getters for object fields/properties because they are private by default
     public fun name(nft: &Nft): String { nft.name }
-
-    /// Get the Nft's `traits`
+    public fun description(nft: &Nft): &String { &nft.description }
     public fun traits(nft: &Nft): &vector<String> { &nft.traits }
-
-    /// Get the Nft's `url`
     public fun url(nft: &Nft): String { nft.url }
+		// &nft.url with type of &Url
 		
 
 	#[test_only]
@@ -84,7 +85,7 @@ module package_addr::nft {
 		//make sword
 		ts::next_tx(sn, admin);
 		{
-			mint(utf8(b"nft_name"),
+			mint(utf8(b"nft_name"), utf8(b"description"),
 			vector[utf8(b"cat"), utf8(b"hungry"), utf8(b"sleepy")],
 			utf8(b"nft.com"),ts::ctx(sn));
 		};
@@ -106,14 +107,14 @@ module package_addr::nft {
 		ts::next_tx(sn, user1);
 		{
 			let mut nft = ts::take_from_sender<Nft>(sn);
-			set_url(&mut nft, utf8(b"nft2.com"));
+			update_url(&mut nft, utf8(b"nft2.com"));
 			ts::return_to_sender(sn, nft);
 		};
 
 		ts::next_tx(sn, user1);
 		{
 			let nft = ts::take_from_sender<Nft>(sn);
-			destroy(nft);
+			burn(nft);
 		};
 //https://github.com/movebit/sui-course-2023/blob/main/part-5/lesson-1/src/nft-example/sources/artwork.move
 		ts::end(scenario_val);
