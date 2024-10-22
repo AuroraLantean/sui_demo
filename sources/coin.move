@@ -4,7 +4,7 @@
 // coin module: https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui-framework/coin.md
 module package_addr::dragoncoin {
     
-    use sui::coin::{Coin, value, TreasuryCap, create_currency, CoinMetadata, mint, burn, total_supply, get_decimals, get_name, get_symbol, get_description, get_icon_url,update_description};
+    use sui::coin::{Self, Coin, value, TreasuryCap, CoinMetadata};
 		// https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md
     // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md
     use sui::url::{Self, Url};              // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/url.md
@@ -16,15 +16,11 @@ module package_addr::dragoncoin {
     /// Make sure that the name of the type matches the module's name.
     public struct DRAGONCOIN has drop {}
 
-    /// Module initializer is called once on module publish. A treasury cap is sent to the 
-    /// package_addr, who then controls minting and burning
-    //
     // create_currency(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-create_currency
     // transfer::public_freeze_object(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md#function-public_freeze_object
     // transfer::public_transfer(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md#function-public_transfer
     fun init( witness: DRAGONCOIN, ctx: &mut TxContext) {
-        // Function interface: public fun create_currency<T: drop>(witness: T, decimals: u8, symbol: vector<u8>, name: vector<u8>, description: vector<u8>, icon_url: option::Option<url::Url>, ctx: &mut tx_context::TxContext): (TreasuryCap<T>, CoinMetadata<T>)
-        let (treasuryCap, metadata) = create_currency(
+        let (treasuryCap, metadata) = coin::create_currency(
             witness, 
             6, 
             b"DRAG", 
@@ -52,7 +48,7 @@ module package_addr::dragoncoin {
 
     // coin::mint_and_transfer(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-mint_and_transfer
     // transfer::public_transfer(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md#function-public_transfer
-    public entry fun mint_coin
+    public entry fun mint
     (
         cap: &mut TreasuryCap<DRAGONCOIN>, 
         recipient: address,
@@ -60,15 +56,13 @@ module package_addr::dragoncoin {
         ctx: &mut tx_context::TxContext
     )
     {
-				//coin::mint_and_transfer(cap, amount, recipient, ctx);
-
         let new_coin = internal_mint_coin(cap, amount, ctx);
 
         // transfer the new coin to the recipient
         transfer::public_transfer(new_coin, recipient);
+				//coin::mint_and_transfer(cap, amount, recipient, ctx);
     }
-    // This is the internal mint function. This function uses the Coin::mint function to create and return a new Coin object containing a balance of the given amount
-    //
+
     // coin::mint(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-mint
     fun internal_mint_coin
     (
@@ -77,11 +71,10 @@ module package_addr::dragoncoin {
         ctx: &mut tx_context::TxContext
     ): Coin<DRAGONCOIN>
     { 
-        mint(cap, amount, ctx)
+        coin::mint(cap, amount, ctx)
     }
 		
-    // This function is an example of how internal_burn_coin() can be used.
-    public entry fun burn_coin
+    public entry fun burn
     (
         cap: &mut TreasuryCap<DRAGONCOIN>, 
         coin: Coin<DRAGONCOIN>
@@ -90,39 +83,46 @@ module package_addr::dragoncoin {
         // Note: internal_burn_coin returns a u64 but it can be ignored since u64 has drop
         internal_burn_coin(cap, coin);
     }
-    // This is the internal burn function. This function uses the Coin::burn function to take a coin and destroy it. The function returns the amount of the coin that was destroyed.
-    //
-    // burn(): hDRAGONCOINttps://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-burn
+
+    // burn(): ttps://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-burn
     fun internal_burn_coin
     (
         cap: &mut TreasuryCap<DRAGONCOIN>, 
         coin: Coin<DRAGONCOIN>
     ): u64
     {
-        burn(cap, coin)
+        coin::burn(cap, coin)
+    }
+    public fun join(coin1: &mut Coin<DRAGONCOIN>, coin2: Coin<DRAGONCOIN>): &mut Coin<DRAGONCOIN> {
+        coin::join( coin1, coin2);
+				coin1
+    }
+
+    public fun split(coin: &mut Coin<DRAGONCOIN>, amount: u64, ctx: &mut TxContext): Coin<DRAGONCOIN> {
+        coin::split(coin, amount, ctx)
     }
 		
 		public fun get_total_supply(cap: & TreasuryCap<DRAGONCOIN>): u64 {
-			total_supply(cap)
+			coin::total_supply(cap)
 		}
 		public fun get_decimals_coin(metadata: & CoinMetadata<DRAGONCOIN>): u8 {
-			get_decimals(metadata)
+			coin::get_decimals(metadata)
 		}
 		public fun get_name_coin(metadata: & CoinMetadata<DRAGONCOIN>): String {
-			get_name(metadata)
+			coin::get_name(metadata)
 		}
 		public fun get_symbol_coin(metadata: & CoinMetadata<DRAGONCOIN>): ascii::String {
-			get_symbol(metadata)
+			coin::get_symbol(metadata)
 		}
 		public fun get_description_coin(metadata: & CoinMetadata<DRAGONCOIN>): String {
-			get_description(metadata)
+			coin::get_description(metadata)
 		}
 		public fun get_icon_url_coin(metadata: & CoinMetadata<DRAGONCOIN>): Option<sui::url::Url> {
-			get_icon_url(metadata)
+			coin::get_icon_url(metadata)
 		}
 		
 		public fun update_description_coin(treasury_cap: & TreasuryCap<DRAGONCOIN>, metadata: &mut CoinMetadata<DRAGONCOIN>, description_new: String) {
-			update_description(treasury_cap, metadata, description_new)
+			coin::update_description(treasury_cap, metadata, description_new)
 		}
 		
 		/*//docs::/#regulate}
@@ -168,7 +168,7 @@ module package_addr::dragoncoin {
 			p(&total_supply);
 			assert!(total_supply == 0, 1);
 			
-			mint_coin(&mut cap, user1, amount, ts::ctx(sn));
+			mint(&mut cap, user1, amount, ts::ctx(sn));
 			
 			let total_supply = get_total_supply(&cap);
 			p(&total_supply);
@@ -184,7 +184,7 @@ module package_addr::dragoncoin {
 			//ts::return_to_sender(sn, coin);
 
 			let mut cap = ts::take_from_address<TreasuryCap<DRAGONCOIN>>(sn, admin);
-			burn_coin(&mut cap, coin);
+			burn(&mut cap, coin);
 			ts::return_to_address(admin, cap);
 		};
 
