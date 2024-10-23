@@ -4,7 +4,7 @@
 // coin module: https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui-framework/coin.md
 module package_addr::dragoncoin {
     
-    use sui::coin::{Self, Coin, value, TreasuryCap, CoinMetadata};
+    use sui::coin::{Self, Coin, TreasuryCap, CoinMetadata};
 		// https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md
     // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md
     use sui::url::{Self, Url};              // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/url.md
@@ -144,6 +144,8 @@ module package_addr::dragoncoin {
         coin::deny_list_v2_remove(denylist, denycap, denyaddy, ctx);
     }*/
 
+	#[test_only]
+	use sui::coin::value;
 	#[test_only]
 	use std::string::utf8;
 

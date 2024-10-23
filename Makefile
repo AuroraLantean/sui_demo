@@ -14,6 +14,7 @@ test_counter :; sui move test counter
 test_sword :; sui move test sword
 test_nft :; sui move test nft
 test_coin :; sui move test coin
+test_market :; sui move test market
 
 new_addr :; sui client new-address ed25519
 activate_addr :; sui client active-address
@@ -25,6 +26,7 @@ activate_devnet :; sui client switch --env devnet
 
 publish_coin1 :; sui client publish --gas-budget 50000000 ./sources/coin.move
 publish :; sui client publish --gas-budget 50000000 
+read_object :; sui client object object_id
 #./sources/calculator.move
 
 suiscan :; echo "https://suivision.xyz/"
