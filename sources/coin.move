@@ -45,6 +45,10 @@ module package_addr::dragoncoin {
         transfer::public_transfer(treasuryCap, tx_context::sender(ctx))
     }
 
+		#[test_only]
+    public fun new( witness: DRAGONCOIN, ctx: &mut TxContext) {
+			init( witness, ctx);
+		}
 
     // coin::mint_and_transfer(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/coin.md#function-mint_and_transfer
     // transfer::public_transfer(): https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/transfer.md#function-public_transfer

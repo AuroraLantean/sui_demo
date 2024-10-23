@@ -37,12 +37,12 @@ module package_addr::market {
 		item: T, ask: u64, ctx: &mut TxContext
 	){
 		let item_id = object::id(&item);
-		let mut gameListing = Listing {
+		let mut listing = Listing {
 			ask, id: object::new(ctx),
 			owner: tx_context::sender(ctx),
 		};
-		df::add(&mut gameListing.id, true, item);
-		bag::add(&mut market.items, item_id, gameListing);
+		df::add(&mut listing.id, true, item);
+		bag::add(&mut market.items, item_id, listing);
 	}
 	
 	//internal function to remove listing and return the listed item. Only owner is allowed
@@ -99,4 +99,73 @@ module package_addr::market {
 		//transfer::public_transfer(coin, ctx.sender());
 	}
 	
+	#[test_only]
+	use sui::sui::SUI;
+	#[test_only]
+	use package_addr::dragoncoin::DRAGONCOIN;
+	#[test_only]
+	use package_addr::nft;
+	#[test_only]
+	use std::string::utf8;
+
+	#[test]
+	public fun test_market(){
+		use sui::test_scenario as ts;
+		use std::debug::print as p;
+		
+		let admin: address = @0xA;
+		let user1: address = @0x001;
+    let mut scenario_val = ts::begin(admin);
+    let sn = &mut scenario_val;
+		//make NFT item
+		{
+			p(&utf8(b"make NFT"));
+			nft::mint(utf8(b"nft_name"), utf8(b"description"),
+			vector[utf8(b"cat")],
+			utf8(b"nft.com"),ts::ctx(sn));
+		};
+		//make a new market
+		ts::next_tx(sn, admin);
+		{
+			p(&utf8(b"make a new market"));
+			new<DRAGONCOIN>(ts::ctx(sn));
+		};
+		//list_item
+		let item_id;
+		ts::next_tx(sn, admin);
+		{
+			p(&utf8(b"list_item"));
+			let mut market =  ts::take_shared<Market<DRAGONCOIN>>(sn);
+			let nft_item = ts::take_from_sender<nft::Nft>(sn);
+			item_id = object::id(&nft_item);
+			let item_price = 137u64;
+
+			list_item<nft::Nft, DRAGONCOIN>(
+			&mut market,
+			nft_item, 
+			item_price, 
+			ts::ctx(sn));
+			ts::return_shared(market);
+		};
+		//buy_and_take
+		ts::next_tx(sn, user1);
+		{
+			p(&utf8(b"buy_and_take"));
+			let mut market =  ts::take_shared<Market<DRAGONCOIN>>(sn);
+			
+			let coin = coin::mint_for_testing<DRAGONCOIN>(137u64, ts::ctx(sn));
+
+			buy_and_take<nft::Nft, DRAGONCOIN>(&mut market, item_id, coin, ts::ctx(sn));
+			ts::return_shared(market);
+		};
+		//check received nft item
+		ts::next_tx(sn, user1);
+		{
+			p(&utf8(b"check received nft item"));
+			let nft_item = ts::take_from_sender<nft::Nft>(sn);
+			assert!(nft::url(&nft_item) == utf8(b"nft.com"), 1);
+			ts::return_to_sender(sn, nft_item);
+		};
+		ts::end(scenario_val);
+	}
 }
