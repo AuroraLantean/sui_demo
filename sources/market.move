@@ -93,10 +93,15 @@ module package_addr::market {
 		transfer::public_transfer(obj, tx_context::sender(ctx));
 	}
 	
-	//take profits from selling items
-	public fun withdraw<COIN>(market: &mut Market<COIN>, ctx: &TxContext): Coin<COIN>{
+	//get sender's payemnt
+	fun get_sender_payment<COIN>(market: &mut Market<COIN>, ctx: &TxContext): Coin<COIN>{
 		table::remove<address, Coin<COIN>>(&mut market.payments, tx_context::sender(ctx))
-		//transfer::public_transfer(coin, ctx.sender());
+	}
+	//take profits from selling items
+	public entry fun withdraw<COIN>(market: &mut Market<COIN>, recipient: address, ctx: &TxContext){
+		let coin = get_sender_payment<COIN>(market, ctx);
+		// let coin = coin::take(&mut shop.balc, amount, ctx);
+		transfer::public_transfer(coin, recipient);
 	}
 	
 	#[test_only]
@@ -115,6 +120,7 @@ module package_addr::market {
 		
 		let admin: address = @0xA;
 		let user1: address = @0x001;
+		let item_price = 137u64;
     let mut scenario_val = ts::begin(admin);
     let sn = &mut scenario_val;
 		//make NFT item
@@ -124,12 +130,14 @@ module package_addr::market {
 			vector[utf8(b"cat")],
 			utf8(b"nft.com"),ts::ctx(sn));
 		};
+		
 		//make a new market
 		ts::next_tx(sn, admin);
 		{
 			p(&utf8(b"make a new market"));
 			new<DRAGONCOIN>(ts::ctx(sn));
 		};
+
 		//list_item
 		let item_id;
 		ts::next_tx(sn, admin);
@@ -138,7 +146,6 @@ module package_addr::market {
 			let mut market =  ts::take_shared<Market<DRAGONCOIN>>(sn);
 			let nft_item = ts::take_from_sender<nft::Nft>(sn);
 			item_id = object::id(&nft_item);
-			let item_price = 137u64;
 
 			list_item<nft::Nft, DRAGONCOIN>(
 			&mut market,
@@ -147,24 +154,45 @@ module package_addr::market {
 			ts::ctx(sn));
 			ts::return_shared(market);
 		};
+
 		//buy_and_take
 		ts::next_tx(sn, user1);
 		{
 			p(&utf8(b"buy_and_take"));
 			let mut market =  ts::take_shared<Market<DRAGONCOIN>>(sn);
 			
-			let coin = coin::mint_for_testing<DRAGONCOIN>(137u64, ts::ctx(sn));
+			let coin = coin::mint_for_testing<DRAGONCOIN>(item_price, ts::ctx(sn));
 
 			buy_and_take<nft::Nft, DRAGONCOIN>(&mut market, item_id, coin, ts::ctx(sn));
 			ts::return_shared(market);
 		};
-		//check received nft item
+
+		//user1 checks received nft item
 		ts::next_tx(sn, user1);
 		{
-			p(&utf8(b"check received nft item"));
+			p(&utf8(b"user1 checks received nft item"));
 			let nft_item = ts::take_from_sender<nft::Nft>(sn);
 			assert!(nft::url(&nft_item) == utf8(b"nft.com"), 1);
 			ts::return_to_sender(sn, nft_item);
+		};
+
+		//admin calls withdraw()
+		ts::next_tx(sn, admin);
+		{
+			p(&utf8(b"admin calls withdraw()"));
+			let mut market =  ts::take_shared<Market<DRAGONCOIN>>(sn);
+			withdraw<DRAGONCOIN>(&mut market, admin, ts::ctx(sn));
+			ts::return_shared(market);
+		};
+
+		//admin checks received payment
+		ts::next_tx(sn, admin);
+		{
+			p(&utf8(b"admin checks received payment"));
+			let coin = ts::take_from_sender<Coin<DRAGONCOIN>>(sn);//
+			p(&coin::value(&coin));
+			assert!(coin::value(&coin) == item_price, 1);
+			ts::return_to_sender(sn, coin);
 		};
 		ts::end(scenario_val);
 	}
