@@ -37,6 +37,20 @@ mint_coin :; sui client call --package $(PACKAGE_ID) --module dragoncoin --funct
 transfer_coin :; sui client transfer --to recipient --object-id Coin_Object_Id --gas-budget 50000000
 #transfer_coin :; sui client call --package $(PACKAGE_ID) --module dragoncoin --function transfer --args 0x6b30ea36c885f9ddbece6529dd5a953c6bc248729269b46f457709c6d11d775d ${wallet2} --gas-budget 50000000
 
+#-----------== NFT Walrus
+mint_nft_walrus :; sui client call --package $PACKAGE_ID --module simple_nft --function mint_nft --args "NFT Name" "NFT Description" \
+"YOUR_WALRUS_BLOB_ID" \
+"YOUR_WALRUS_OBJECT_ID" \
+--gas-budget 10000000
+
+list_coin_balc :; sui client gas
+
+#0.1 SUI to NFT (100000000 MIST)
+deposit_sui_to_nft :; sui client call --package $PACKAGE_ID --module simple_nft --function deposit_sui --args $NFT_ID $COIN_ID 100000000 --gas-budget 10000000
+
+withdraw_sui_from_nft :; sui client call --package $PACKAGE_ID --module simple_nft --function withdraw_sui \
+--args $NFT_ID 100000000 \
+--gas-budget 10000000
 
 #-----------== NFT
 mint_nft :; sui client call --package $(PACKAGE_ID) --module nft --function mint --args "002_CatHungry" "['cat', 'hungry', 'sleepy']" "https://peach-tough-crayfish-991.mypinata.cloud/ipfs/QmNoGLRSVGW1f3y3djeKR1sj249PB3J5zkZoYyCCpTq1bg" --gas-budget 500000000
