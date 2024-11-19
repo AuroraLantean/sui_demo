@@ -44,15 +44,23 @@ module package_addr::market {
 		df::add(&mut listing.id, true, item);
 		bag::add(&mut market.items, item_id, listing);
 	}
-	
+		//List an item in the Market
+	/*public fun get_item<T: key + store, COIN>(
+		market: &mut Market<COIN>,
+		item: T, ask: u64, ctx: &mut TxContext
+	){
+		assert!( df::exists_(&house_data.id, game_id), EGameDoesNotExist);
+
+		df::borrow(house_data.borrow(), game_id) 
+	}*/
+
 	//internal function to remove listing and return the listed item. Only owner is allowed
 	fun delist<T: key + store, COIN>(
 		market: &mut Market<COIN>,
 		item_id: ID,
 		ctx: &TxContext,
 	): T {
-		let Listing { id, owner, ask: _ } = bag::remove(&mut market.items, item_id);
-		let mut idmut = id;
+		let Listing { id: mut idmut, owner, ask: _ } = bag::remove(&mut market.items, item_id);
 		
 		assert!(tx_context::sender(ctx) == owner, ENotOwner);
 		let item = df::remove(&mut idmut, true);
