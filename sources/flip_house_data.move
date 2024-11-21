@@ -1,4 +1,4 @@
-//https://docs.sui.io/guides/developer/app-examples/coin-flip
+//https://docs.sui.io/guides/developer/app-examples/coin-flip Verifiable random functions (VRFs) is to make a game: The user (human) plays against the house (module) and places a bet on either heads or tails. The user then either receives double their bet, or gets nothing
 module package_addr::house_data {
 
 	use sui::balance::{Self, Balance};
