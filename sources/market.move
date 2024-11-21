@@ -112,8 +112,8 @@ module package_addr::market {
 		transfer::public_transfer(coin, recipient);
 	}
 	
-	#[test_only]
-	use sui::sui::SUI;
+	//#[test_only]
+	//use sui::sui::SUI;
 	#[test_only]
 	use package_addr::dragoncoin::DRAGONCOIN;
 	#[test_only]
