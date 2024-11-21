@@ -107,10 +107,46 @@ module package_addr::house_data {
 	}
 
 	// --------------- HouseData Read References 
+  /// Returns a reference to the house id.
+  public(package) fun borrow(house_data: &HouseData): &UID {
+    &house_data.id
+  }
+
+  /// Returns the balance of the house.
+  public fun balance(house_data: &HouseData): u64 {
+    house_data.balance.value()
+  }
+
+  /// Returns the address of the house.
+  public fun house(house_data: &HouseData): address {
+    house_data.house
+  }
+
+  public fun public_key(house_data: &HouseData): vector<u8> {
+    house_data.public_key
+  }
+
+  public fun max_stake(house_data: &HouseData): u64 {
+    house_data.max_stake
+  }
+
+  public fun min_stake(house_data: &HouseData): u64 {
+    house_data.min_stake
+  }
+
+  public fun fees(house_data: &HouseData): u64 {
+    house_data.fees.value()
+  }
+
+  public fun base_fee_in_bp(house_data: &HouseData): u16 {
+    house_data.base_fee_in_bp
+  }
+	
 	public fun get_houser(house_data: &HouseData): (&UID, u64, u64, u64, u64, u16, address, vector<u8> ) {
 		(&house_data.id, house_data.balance.value(), house_data.max_stake, house_data.min_stake, house_data.fees.value(), house_data.base_fee_in_bp, house_data.house, house_data.public_key)
 	}
-
+	
+  // --------------- Test-only Functions
 	#[test_only]
 	public fun init_for_testing(ctx: &mut TxContext) {
 		init(HOUSE_DATA {}, ctx);
