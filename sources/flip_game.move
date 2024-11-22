@@ -32,7 +32,7 @@ module package_addr::flip_game {
 	
   // Events
   /// Emitted when a new game has started.
-  public struct NewGame has copy, drop {
+  public struct NewGameEvent has copy, drop {
     game_id: ID,
     player: address,
     vrf_input: vector<u8>,
@@ -41,7 +41,7 @@ module package_addr::flip_game {
     fee_bp: u16
   }
   /// Emitted when a game has finished.
-  public struct Outcome has copy, drop {
+  public struct OutcomeEvent has copy, drop {
     game_id: ID,
     status: u8
   }
@@ -61,10 +61,10 @@ module package_addr::flip_game {
 	/// Stake is taken from the player's coin and added to the game's stake. The house's stake is also added to the game's stake.
 	public fun start_game(guess: String, counter: &mut Counter, gasCoinId: Coin<SUI>, house_data: &mut HouseData, ctx: &mut TxContext): ID {
 		let fee_bp = house_data.base_fee_in_bp();
-		let (id, new_game) = internal_start_game(guess, counter, gasCoinId, house_data, fee_bp, ctx);
+		let (game_id, new_game) = internal_start_game(guess, counter, gasCoinId, house_data, fee_bp, ctx);
 
-		dof::add(house_data.borrow_mut(), id, new_game);
-		id
+		dof::add(house_data.borrow_mut(), game_id, new_game);
+		game_id
 	}
 
 	/// Function that determines the winner and distributes the funds accordingly.
@@ -75,7 +75,7 @@ module package_addr::flip_game {
 	/// Anyone can end the game (game & house_data objects are shared).
 	/// The BLS signature of the counter id and the counter's count at the time of game creation appended together.
 	/// If an incorrect BLS sig is passed the function will abort.
-	/// An Outcome event is emitted to signal that the game has ended.
+	/// An OutcomeEvent event is emitted to signal that the game has ended.
 	public fun finish_game(game_id: ID, bls_sig: vector<u8>, house_data: &mut HouseData, ctx: &mut TxContext) {
 		// Ensure that the game exists.
 		assert!(game_exists(house_data, game_id), EGameDoesNotExist);
@@ -108,7 +108,7 @@ module package_addr::flip_game {
 			// Step 3.a: If player wins transfer the game balance as a coin to the player.
 			// Calculate the fee and transfer it to the house.
 			let stake_amount = total_stake.value();
-			let fee_amount = fee_amount(stake_amount, fee_bp);
+			let fee_amount = calculate_fee(stake_amount, fee_bp);
 			let fees = total_stake.split(fee_amount);
 			house_data.borrow_fees_mut().join(fees);
 
@@ -121,7 +121,7 @@ module package_addr::flip_game {
 			HOUSE_WON_STATE
 		};
 
-		emit(Outcome {
+		emit(OutcomeEvent {
 				game_id,
 				status
 		});
@@ -151,7 +151,7 @@ module package_addr::flip_game {
 
     transfer::public_transfer(total_stake.into_coin(ctx), player);
 
-    emit(Outcome {
+    emit(OutcomeEvent {
       game_id,
       status: CHALLENGED_STATE
     });
@@ -193,7 +193,7 @@ module package_addr::flip_game {
 
 	/// Helper function to calculate the amount of fees to be paid.
 	/// Fees are only applied on the player's stake.
-	public fun fee_amount(game_stake: u64, fee_in_bp: u16): u64 {
+	public fun calculate_fee(game_stake: u64, fee_in_bp: u16): u64 {
 			((((game_stake / (GAME_RETURN as u64)) as u128) * (fee_in_bp as u128) / 10_000) as u64)
 	}
 
@@ -243,7 +243,7 @@ module package_addr::flip_game {
 			fee_bp
 		};
 
-		emit(NewGame {
+		emit(NewGameEvent {
 			game_id,
 			player: ctx.sender(),
 			vrf_input,

@@ -31,19 +31,18 @@ module package_addr::house_data {
 	public struct HOUSE_DATA has drop {}
 
 	fun init(otw: HOUSE_DATA, ctx: &mut TxContext) {
-		// Creating and sending the Publisher object to the sender.
+		// Claim a Publisher object and send it to transaction sender.
 		package::claim_and_keep(otw, ctx);
 
 		// Creating and sending the HouseCap object to the sender.
 		let house_cap = HouseCap {
 				id: object::new(ctx)
 		};
-
 		transfer::transfer(house_cap, ctx.sender());
 	}
 
-	public fun initialize_house_data(house_cap: HouseCap, coin: Coin<SUI>, public_key: vector<u8>, ctx: &mut TxContext) {
-		assert!(coin.value() > 0, EInsufficientBalance);
+	public fun initialize_house_data(house_cap: HouseCap, gasCoinId: Coin<SUI>, public_key: vector<u8>, ctx: &mut TxContext) {
+		assert!(gasCoinId.value() > 0, EInsufficientBalance);
 
 		let house_data = HouseData {
 			id: object::new(ctx),
@@ -62,16 +61,16 @@ module package_addr::house_data {
 		transfer::share_object(house_data);
 	}
 
-	public fun top_up(house_data: &mut HouseData, coin: Coin<SUI>, _: &mut TxContext) {
-		coin::put(&mut house_data.balance, coin)
+	public fun top_up(house_data: &mut HouseData, gasCoinId: Coin<SUI>, _: &mut TxContext) {
+		coin::put(&mut house_data.balance, gasCoinId)
 	}
 
 	public fun withdraw(house_data: &mut HouseData, ctx: &mut TxContext) {
 		// Only the house address can withdraw
 		assert!(ctx.sender() == house_data.house, ECallerNotHouse);
 
-		let total_balance = house_data.balance.value();
-		let coin = coin::take(&mut house_data.balance, total_balance, ctx);
+		let amount = house_data.balance.value();
+		let coin = coin::take(&mut house_data.balance, amount, ctx);
 		transfer::public_transfer(coin, house_data.house);
 	}
 
@@ -142,7 +141,7 @@ module package_addr::house_data {
     house_data.base_fee_in_bp
   }
 	
-	public fun get_houser(house_data: &HouseData): (&UID, u64, u64, u64, u64, u16, address, vector<u8> ) {
+	public fun get_house_data_all(house_data: &HouseData): (&UID, u64, u64, u64, u64, u16, address, vector<u8> ) {
 		(&house_data.id, house_data.balance.value(), house_data.max_stake, house_data.min_stake, house_data.fees.value(), house_data.base_fee_in_bp, house_data.house, house_data.public_key)
 	}
 	

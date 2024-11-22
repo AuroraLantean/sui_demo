@@ -13,6 +13,14 @@ module package_addr::counter_nft {
     object::delete(id);
   }
 
+  public entry fun mint_and_transfer(ctx: &mut TxContext) {
+		let counter = Counter {
+			id: object::new(ctx),
+			count: 0
+		};
+		transfer::transfer(counter, ctx.sender());
+	}
+
   public fun mint(ctx: &mut TxContext): Counter {
     Counter {
       id: object::new(ctx),
