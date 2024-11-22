@@ -46,7 +46,7 @@ module package_addr::house_data {
 
 		let house_data = HouseData {
 			id: object::new(ctx),
-			balance: coin.into_balance(),
+			balance: gasCoinId.into_balance(),
 			house: ctx.sender(),
 			public_key,
 			max_stake: 50_000_000_000, // 50 SUI, 1 SUI = 10^9.

@@ -1,3 +1,12 @@
+/* https://github.com/MystenLabs/blackjack-sui
+#	Admin (owner of the HouseCap object) invokes the initialize_house_data function that can be called only once (Capability is destroyed).
+#	Player invokes the place_bet_and_create_game Move function that initializes the game randomness, receives the bet and creates a new game.
+#	Dealer invokes the first_deal Move function that performs the initial deal of the game.
+#	Player invokes the do_hit Move function that records the player's intent to hit, by minting and transfering a HitRequest object to the admin (for the specific game, player, and game's state)
+#	Dealer invokes the hit Move function that performs the hit action (providing as input the corresponding HitRequest object)
+#	Player invokes the do_stand Move function that records the player's intent to stand, by minting and transfering a StandRequest object to the admin (for the specific game, player, and game's state)
+#	Dealer invokes the stand Move function that performs the stand action (providing as input the corresponding HitRequest object)
+*/
 module package_addr::single_player_blackjack {
   // Imports
   use sui::bls12381::bls12381_min_pk_verify;
