@@ -1,4 +1,5 @@
 //https://github.com/paulgs9988/sui_nft_tutorial
+//https://github.com/MystenLabs/sui/tree/main/examples/trading/contracts/demo/sources
 module package_addr::nft_walrus {
 	use sui::package;   //For package publishing
 	use sui::display;   //For NFT metadata display
@@ -16,7 +17,8 @@ module package_addr::nft_walrus {
 		balance: Balance<SUI>
 	}
 
-	public struct NFT_WALRUS has drop{} //OTW
+	//OTW to create display
+	public struct NFT_WALRUS has drop{}
 	const ENO_EMPTY_NAME: u64 = 0;
 	const ENO_EMPTY_BLOB_ID: u64 = 1;
 
@@ -35,9 +37,12 @@ module package_addr::nft_walrus {
 		];
 		
 		let publisher = package::claim(witness, ctx);
+
+    // Get a new `Display` object for the `Hero` type.
 		let mut display_obj = display::new_with_fields<NftWalrus>(
 				&publisher, keys, values, ctx
 		);
+    // Commit first version of `Display` to apply changes.
 		display::update_version(&mut display_obj);
 		
 		transfer::public_transfer(publisher, tx_context::sender(ctx));

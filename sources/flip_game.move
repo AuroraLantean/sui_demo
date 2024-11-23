@@ -64,6 +64,7 @@ module package_addr::flip_game {
 		let (game_id, new_game) = internal_start_game(guess, counter, gasCoinId, house_data, fee_bp, ctx);
 
 		dof::add(house_data.borrow_mut(), game_id, new_game);
+		//&mut house_data.id failed because The field 'id' can only be accessed within the module house_data since it defines 'HouseData'
 		game_id
 	}
 
