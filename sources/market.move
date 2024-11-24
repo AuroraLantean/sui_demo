@@ -97,8 +97,8 @@ module package_addr::market {
 	
 	// Call `buy` and transfer item to the sender
 	public entry fun buy_and_take<T: key + store, COIN>(market: &mut Market<COIN>, item_id: ID, paid: Coin<COIN>, ctx: &mut TxContext){
-		let obj = buy<T, COIN>(market, item_id, paid);
-		transfer::public_transfer(obj, tx_context::sender(ctx));
+		let item = buy<T, COIN>(market, item_id, paid);
+		transfer::public_transfer(item, tx_context::sender(ctx));
 	}
 	
 	//get sender's payemnt
