@@ -5,7 +5,6 @@ And users who bet can claim rewards if they win.*/
 module package_addr::prediction {
 	//use sui::dynamic_field as df;
 	use sui::coin::{Self, Coin};
-	use sui::transfer;
 	//use sui::bag::{Self, Bag};
 	use sui::table::{Self, Table};
 	use std::string::{utf8, String};
@@ -72,12 +71,13 @@ module package_addr::prediction {
 	
 	// === Tests ===
 	#[test_only] use sui::sui::SUI;
+	#[test_only] use sui::coin::value;
 	#[test_only] use sui::test_scenario::{Self as ts, Scenario};
 	#[test_only] use std::debug::print as p;
 			
 	#[test_only]
-	fun mint(ts: &mut Scenario): Coin<SUI> {
-		coin::mint_for_testing<SUI>(10000, ts.ctx())
+	fun mint(sn: &mut Scenario, amount: u64): Coin<SUI> {
+		coin::mint_for_testing<SUI>(amount, sn.ctx())
 	}
 
 	#[test]
@@ -85,10 +85,6 @@ module package_addr::prediction {
 		let admin: address = @0xA;
 		let user1: address = @0x001;
 		let mut tsv = ts::begin(admin);
-		let sn = &mut tsv;
-		let coin = mint(sn);
-
-		let amount = 1000;
 		{
 			new<SUI>(utf8(b"Bitcoin"), utf8(b"Ethereum"), utf8(b"Solana"), utf8(b"Sui"), tsv.ctx());
 		};
@@ -102,7 +98,23 @@ module package_addr::prediction {
 			assert!(prediction.choices[0] == utf8(b"Bitcoin"));
 			ts::return_shared(prediction);
 		};
-		coin.burn_for_testing();
+
+		let amount = 1000;
+		// user bets on prediction
+		{
+			tsv.next_tx(user1);
+			let mut prediction: Prediction<SUI> = tsv.take_shared();
+			let coin1 = mint(&mut tsv, amount);
+			//let coin = ts::take_from_sender<Coin<SUI>>(&mut tsv);
+			p(&value(&coin1));
+			assert!(value(&coin1) == amount, 1);
+		
+			//invoke bet()
+			let choice = 0;
+			bet<SUI>(&mut prediction, 123, coin1, choice, tsv.ctx());
+			//coin1.burn_for_testing();
+			ts::return_shared(prediction);
+		};
 		tsv.end();
 	}
 }
