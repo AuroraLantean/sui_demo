@@ -17,6 +17,7 @@ module package_addr::prediction {
 	//Shared Object. Anyone can make this
 	public struct Prediction<phantom COIN> has key {
 		id: UID,
+		owner: address,
 		choices: vector<String>,
 		users: Table<address, UserData<Coin<COIN>>>,
 	}
@@ -31,6 +32,7 @@ module package_addr::prediction {
 		
 		transfer::share_object(	Prediction {
 			id: object::new(ctx),
+			owner: ctx.sender(),
 			choices: vector[choice1, choice2, choice3, choice4],
 			users: table::new<address, UserData<Coin<COIN>>>(ctx),
 		});
@@ -75,23 +77,32 @@ module package_addr::prediction {
 			
 	#[test_only]
 	fun mint(ts: &mut Scenario): Coin<SUI> {
-		coin::mint_for_testing<SUI>(1000, ts.ctx())
+		coin::mint_for_testing<SUI>(10000, ts.ctx())
 	}
 
 	#[test]
 	fun test_init_prediction() {
 		let admin: address = @0xA;
 		let user1: address = @0x001;
-		let mut sval = ts::begin(admin);
-		let sn = &mut sval;
+		let mut tsv = ts::begin(admin);
+		let sn = &mut tsv;
 		let coin = mint(sn);
 
 		let amount = 1000;
 		{
-			new<SUI>(utf8(b"BITCOIN"), utf8(b"choice2"), utf8(b"choice3"), utf8(b"choice4"), ts::ctx(sn));
+			new<SUI>(utf8(b"Bitcoin"), utf8(b"Ethereum"), utf8(b"Solana"), utf8(b"Sui"), tsv.ctx());
 		};
 		
+		// read prediction object
+		{
+			tsv.next_tx(admin);
+			let mut prediction: Prediction<SUI> = tsv.take_shared();
+			p(&prediction);
+			assert!(prediction.owner == admin);
+			assert!(prediction.choices[0] == utf8(b"Bitcoin"));
+			ts::return_shared(prediction);
+		};
 		coin.burn_for_testing();
-		sval.end();
+		tsv.end();
 	}
 }

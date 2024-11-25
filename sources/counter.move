@@ -69,17 +69,17 @@ module package_addr::counter_test {
 		let owner = @0xC0FFEE;
 		let user1 = @0xA1;
 
-		let mut ts = ts::begin(user1);
+		let mut tsv = ts::begin(user1);
 		// make counter
 		{
-				ts.next_tx(owner);
-				counter::make_user_counter(ts.ctx());
+				tsv.next_tx(owner);
+				counter::make_user_counter(tsv.ctx());
 		};
 
 		// read counter
 		{
-			ts.next_tx(user1);
-			let mut counter: Counter = ts.take_shared();
+			tsv.next_tx(user1);
+			let mut counter: Counter = tsv.take_shared();
 
 			assert!(counter.owner() == owner);
 			assert!(counter.value() == 0);
@@ -91,19 +91,19 @@ module package_addr::counter_test {
 
 		// update counter
 		{
-			ts.next_tx(owner);
-			let mut counter: Counter = ts.take_shared();
+			tsv.next_tx(owner);
+			let mut counter: Counter = tsv.take_shared();
 
 			assert!(counter.owner() == owner);
 			assert!(counter.value() == 6);
 
-			counter.set_value(100, ts.ctx());
+			counter.set_value(100, tsv.ctx());
 			ts::return_shared(counter);
 		};
 
 		{
-			ts.next_tx(user1);
-			let mut counter: Counter = ts.take_shared();
+			tsv.next_tx(user1);
+			let mut counter: Counter = tsv.take_shared();
 
 			assert!(counter.owner() == owner);
 			assert!(counter.value() == 100);
@@ -115,10 +115,10 @@ module package_addr::counter_test {
 
 		// delete counter
 		{
-			ts.next_tx(owner);
-			let counter: Counter = ts.take_shared();
-			counter.delete_counter(ts.ctx());
+			tsv.next_tx(owner);
+			let counter: Counter = tsv.take_shared();
+			counter.delete_counter(tsv.ctx());
 		};
-		ts.end();
+		tsv.end();
 	}
 }
