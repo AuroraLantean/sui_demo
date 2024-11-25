@@ -9,42 +9,61 @@ module package_addr::prediction {
 	//use sui::bag::{Self, Bag};
 	use sui::table::{Self, Table};
 	use std::string::{utf8, String};
+	//use sui::balance::{Self, Balance};
 
-	//Shared Object. Anyone can make this object with specified coin type
+	public struct UserData<Coin> has store, copy {
+		bets: vector<Coin>,
+	}
+	//Shared Object. Anyone can make this
 	public struct Prediction<phantom COIN> has key {
 		id: UID,
 		choices: vector<String>,
-		bets: Table<address, Coin<COIN>>,
+		users: Table<address, UserData<Coin<COIN>>>,
 	}
 
 	const EAmountTooSmall: u64 = 0;
 	const EAmountTooBig: u64 = 1;
+	const EChoiceInvalid: u64 = 1;
 	const ENotOwner: u64 = 10;
 	
 	//make a new shared object: Prediction
-	public entry fun new<COIN>(choice1: String,choice2: String, choice3: String, choice4: String,ctx: &mut TxContext) {
+	public entry fun new<COIN>(choice1: String,choice2: String, choice3: String, choice4: String, ctx: &mut TxContext) {
+		
 		transfer::share_object(	Prediction {
 			id: object::new(ctx),
 			choices: vector[choice1, choice2, choice3, choice4],
-			bets: table::new<address, Coin<COIN>>(ctx),
+			users: table::new<address, UserData<Coin<COIN>>>(ctx),
 		});
 	}
 
 	// Internal function to bet
-	public entry fun bet<COIN>(prediction: &mut Prediction<COIN>, amount: u64, mut gasCoinId: Coin<COIN>, ctx: &mut TxContext) {
+	public entry fun bet<COIN>(prediction: &mut Prediction<COIN>, amount: u64, mut gasCoinId: Coin<COIN>, choice: u64, ctx: &mut TxContext) {
 
 		assert!(gasCoinId.value() >= amount , EAmountTooSmall);
+		assert!(choice <= 3, EChoiceInvalid);
 		let sender = ctx.sender();
 		
 //public fun split<T>(self: &mut Coin<T>, split_amount: u64, ctx: &mut TxContext)
 //let mut stake = gasCoinId.into_balance();
 		let bet_amt = gasCoinId.split(amount, ctx);
 
-		let isFound = table::contains<address, Coin<COIN>>(&prediction.bets, sender);
+		let isFound = table::contains<address, UserData<Coin<COIN>>>(&prediction.users, sender);
+		
 		if(isFound){
-			coin::join(table::borrow_mut<address, Coin<COIN>>(&mut prediction.bets, sender), bet_amt);
+			let user_data = table::borrow_mut<address, UserData<Coin<COIN>>>(&mut prediction.users, sender);
+			
+			let value = vector::borrow_mut(&mut user_data.bets, choice);
+			
+			coin::join(value, bet_amt);
+
 		} else {
-			table::add(&mut prediction.bets, sender, bet_amt);
+			let mut user_data = UserData<Coin<COIN>> {
+				bets: vector<Coin<COIN>>[coin::zero<COIN>(ctx), coin::zero<COIN>(ctx), coin::zero<COIN>(ctx), coin::zero<COIN>(ctx)],
+			};
+			let value = vector::borrow_mut(&mut user_data.bets, choice);
+			coin::join(value, bet_amt);
+			
+			table::add(&mut prediction.users, sender, user_data);
 		};
 		transfer::public_transfer(gasCoinId, sender);
 	}
