@@ -148,10 +148,9 @@ module package_addr::dragoncoin {
         coin::deny_list_v2_remove(denylist, denycap, denyaddy, ctx);
     }*/
 
-	#[test_only]
-	use sui::coin::value;
-	#[test_only]
-	use std::string::utf8;
+	// === Tests ===
+	#[test_only] use sui::coin::value;
+	#[test_only] use std::string::utf8;
 
 	#[test]
 	public fun test_coin(){

@@ -67,4 +67,31 @@ module package_addr::prediction {
 		};
 		transfer::public_transfer(gasCoinId, sender);
 	}
+	
+	// === Tests ===
+	#[test_only] use sui::sui::SUI;
+	#[test_only] use sui::test_scenario::{Self as ts, Scenario};
+	#[test_only] use std::debug::print as p;
+			
+	#[test_only]
+	fun mint(ts: &mut Scenario): Coin<SUI> {
+		coin::mint_for_testing<SUI>(1000, ts.ctx())
+	}
+
+	#[test]
+	fun test_init_prediction() {
+		let admin: address = @0xA;
+		let user1: address = @0x001;
+		let mut sval = ts::begin(admin);
+		let sn = &mut sval;
+		let coin = mint(sn);
+
+		let amount = 1000;
+		{
+			new<SUI>(utf8(b"BITCOIN"), utf8(b"choice2"), utf8(b"choice3"), utf8(b"choice4"), ts::ctx(sn));
+		};
+		
+		coin.burn_for_testing();
+		sval.end();
+	}
 }
