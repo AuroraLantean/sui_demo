@@ -178,7 +178,7 @@ module package_addr::prediction {
 			tsv.next_tx(user1);
 			let mut prediction: Prediction<SUI> = tsv.take_shared();
 			let coin1 = mint(&mut tsv, mint_amt);
-			//let coin = ts::take_from_sender<Coin<SUI>>(&mut tsv);
+
 			prt(&utf8(b"User1 has balance:"));
 			prt(&value(&coin1));
 			//prt(&append(&mut utf8(b"User1 has balance:"),vector[value(&coin1)]));
@@ -186,10 +186,18 @@ module package_addr::prediction {
 		
 			//invoke bet()
 			bet<SUI>(&mut prediction, bet_amt1, coin1, user1_choice, tsv.ctx());
-			//coin1.burn_for_testing();
+
 			ts::return_shared(prediction);
 		};
-		
+
+		prt(&utf8(b"------== user1 balance"));
+		{
+			tsv.next_tx(user2);
+			let coin1b: Coin<SUI> = ts::take_from_address<Coin<SUI>>(&tsv, user1);//ts::take_from_sender<Coin<SUI>>(&mut tsv);
+			assert!(coin1b.value()== mint_amt-bet_amt1, 0);
+			ts::return_to_address(user1, coin1b);
+		};
+
 		prt(&utf8(b"------== user1: check"));
 		{
 			tsv.next_tx(user2);
@@ -248,6 +256,7 @@ prt(&utf8(b"------== Owner: withdraw"));
 			assert!(&prediction.balance.value() == mint_amt);
 			ts::return_shared(prediction);
 		};
+		//coin1.burn_for_testing();
 		tsv.end();
 	}
 /*prt(&utf8(b"------== user3: withdraw"));
