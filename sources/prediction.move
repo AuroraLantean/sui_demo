@@ -5,37 +5,60 @@ And users who bet can claim rewards if they win.*/
 module package_addr::prediction {
 	//use sui::dynamic_field as df;
 	use sui::coin::{Self, Coin};
+  use sui::balance::Balance;
 	//use sui::bag::{Self, Bag};
 	use sui::table::{Self, Table};
-	use std::string::{utf8, String};
+	use std::string::{utf8, String, append};
 	//use sui::balance::{Self, Balance};
-	use 0x1::option::{some, is_some, none, extract};
+	//use 0x1::option::{some, is_some, none, extract};
 
-	public struct UserData<Coin> has store, copy {
-		bets: vector<Coin>,
+	public struct UserData has store, copy {
+		bets: vector<u64>,
 	}
-	//Shared Object. Anyone can make this
+  public struct AdminCap has key {
+    id: UID
+  }
+  fun init(ctx: &mut TxContext) {
+		let admin_cap = AdminCap {
+				id: object::new(ctx)
+		};
+		transfer::transfer(admin_cap, ctx.sender())
+  }
+
 	public struct Prediction<phantom COIN> has key {
 		id: UID,
 		owner: address,
+		//public_key: vector<u8>,
+		balance: Balance<COIN>,
 		choices: vector<String>,
-		users: Table<address, UserData<Coin<COIN>>>,
+		users: Table<address, UserData>,
 	}
 
 	const EAmountTooSmall: u64 = 0;
 	const EAmountTooBig: u64 = 1;
-	const EChoiceInvalid: u64 = 1;
+	const EChoiceInvalid: u64 = 2;
+	const EInsufficientGasCoinId: u64 = 2;
 	const ENotOwner: u64 = 10;
 	
 	//make a new shared object: Prediction
-	public entry fun new<COIN>(choice1: String,choice2: String, choice3: String, choice4: String, ctx: &mut TxContext) {
-		
-		transfer::share_object(	Prediction {
+	public entry fun init_prediction<COIN>(
+		admin_cap: AdminCap,
+		gasCoinId: Coin<COIN>,
+		owner: address,
+		choices: vector<String>, ctx: &mut TxContext) {
+
+		assert!(gasCoinId.value() > 0, EInsufficientGasCoinId);
+
+		let prediction = Prediction {
 			id: object::new(ctx),
-			owner: ctx.sender(),
-			choices: vector[choice1, choice2, choice3, choice4],
-			users: table::new<address, UserData<Coin<COIN>>>(ctx),
-		});
+			owner: owner,//ctx.sender(),
+			balance: gasCoinId.into_balance(),
+			choices,
+			users: table::new<address, UserData>(ctx),
+		};
+		let AdminCap { id } = admin_cap;
+		object::delete(id);
+		transfer::share_object(prediction);
 	}
 
 	public entry fun bet<COIN>(prediction: &mut Prediction<COIN>, amount: u64, mut gasCoinId: Coin<COIN>, choice: u64, ctx: &mut TxContext) {
@@ -44,25 +67,23 @@ module package_addr::prediction {
 		assert!(choice <= 3, EChoiceInvalid);
 		let sender = ctx.sender();
 		
-//public fun split<T>(self: &mut Coin<T>, split_amount: u64, ctx: &mut TxContext)
-//let mut stake = gasCoinId.into_balance();
 		let bet_amt = gasCoinId.split(amount, ctx);
+		prediction.balance.join(bet_amt.into_balance());
 
-		let isFound = table::contains<address, UserData<Coin<COIN>>>(&prediction.users, sender);
+		let isFound = table::contains<address, UserData>(&prediction.users, sender);
 		
 		if(isFound){
-			let user_data = table::borrow_mut<address, UserData<Coin<COIN>>>(&mut prediction.users, sender);
+			let user_data = table::borrow_mut<address, UserData>(&mut prediction.users, sender);
 			
 			let value = vector::borrow_mut(&mut user_data.bets, choice);
-			
-			coin::join(value, bet_amt);
+			*value = *value + amount;
 
 		} else {
-			let mut user_data = UserData<Coin<COIN>> {
-				bets: vector<Coin<COIN>>[coin::zero<COIN>(ctx), coin::zero<COIN>(ctx), coin::zero<COIN>(ctx), coin::zero<COIN>(ctx)],
+			let mut user_data = UserData {
+				bets: vector<u64>[0, 0, 0, 0],
 			};
 			let value = vector::borrow_mut(&mut user_data.bets, choice);
-			coin::join(value, bet_amt);
+			*value = *value + amount;
 			
 			table::add(&mut prediction.users, sender, user_data);
 		};
@@ -70,18 +91,15 @@ module package_addr::prediction {
 	}
 	
 	public fun get_user<COIN>(prediction: &Prediction<COIN>, user: address, index: u64): u64 {
-
-		let isFound = table::contains<address, UserData<Coin<COIN>>>(&prediction.users, user);
+		let isFound = table::contains<address, UserData>(&prediction.users, user);
 		
-		//let user_data: option<UserData<Coin<COIN>>> = 
 		if(!isFound){
-			return 0;
+			return 0
 		};
-		let user_data = table::borrow<address, UserData<Coin<COIN>>>(&prediction.users, user);
+		let user_data = table::borrow<address, UserData>(&prediction.users, user);
 
-		//let bets = user_data.bets;
-		let coin = vector::borrow(&user_data.bets, index);//sui::coin::Coin<sui::sui::SUI>
-		coin.value()
+		let value = vector::borrow(&user_data.bets, index);
+		*value
 	}
 	
 	// === Tests ===
@@ -94,32 +112,50 @@ module package_addr::prediction {
 	fun mint(sn: &mut Scenario, amount: u64): Coin<SUI> {
 		coin::mint_for_testing<SUI>(amount, sn.ctx())
 	}
-
+  #[test_only]
+  public fun transfer_admin_cap(ctx: &mut TxContext) {
+    let admin_cap = AdminCap {
+			id: object::new(ctx)
+    };
+    transfer::transfer(admin_cap, ctx.sender());
+  }
+	
 	#[test]
 	fun test_init_prediction() {
 		let admin: address = @0xA;
+		let owner: address = @0xF;
 		let user1: address = @0x001;
 		let user2: address = @0x002;
 		let user3: address = @0x003;
+		let init_amt: u64 = 1000;
+
 		let mut tsv = ts::begin(admin);
+		prt(&utf8(b"------== deploy & init"));
 		{
-			new<SUI>(utf8(b"Bitcoin"), utf8(b"Ethereum"), utf8(b"Solana"), utf8(b"Sui"), tsv.ctx());
+			transfer_admin_cap(tsv.ctx());
+
+			tsv.next_tx(admin);
+			let choices = vector<String>[utf8(b"Bitcoin"), utf8(b"Ethereum"), utf8(b"Solana"), utf8(b"Sui")];
+			let coin1 = mint(&mut tsv, init_amt);
+
+			let admin_cap = ts::take_from_sender<AdminCap>(&tsv);
+			init_prediction<SUI>(admin_cap, coin1, owner, choices, tsv.ctx());
 		};
-		
-		// read prediction object
+
+	prt(&utf8(b"------== read_init_prediction"));
 		{
 			tsv.next_tx(admin);
 			let prediction: Prediction<SUI> = tsv.take_shared();
-			prt(&prediction);
-			assert!(prediction.owner == admin);
+			//prt(&prediction);
+			assert!(prediction.owner == owner);
 			assert!(prediction.choices[0] == utf8(b"Bitcoin"));
+			assert!(prediction.choices[3] == utf8(b"Sui"));
 			ts::return_shared(prediction);
 		};
 
-		let init_amt: u64 = 1000;
 		let bet_amt1: u64 = 123;
 		let user1_choice: u64 = 0;
-		// user1 bets on prediction
+		prt(&utf8(b"------== user1: bet"));
 		{
 			tsv.next_tx(user1);
 			let mut prediction: Prediction<SUI> = tsv.take_shared();
@@ -127,6 +163,7 @@ module package_addr::prediction {
 			//let coin = ts::take_from_sender<Coin<SUI>>(&mut tsv);
 			prt(&utf8(b"User1 has balance:"));
 			prt(&value(&coin1));
+			//prt(&append(&mut utf8(b"User1 has balance:"),vector[value(&coin1)]));
 			assert!(value(&coin1) == init_amt, 1);
 		
 			//invoke bet()
@@ -135,15 +172,11 @@ module package_addr::prediction {
 			ts::return_shared(prediction);
 		};
 		
-		// read prediction object
-		/*id: UID,
-		owner: address,
-		choices: vector<String>,
-		users: Table<address, UserData<Coin<COIN>>>,*/
+		prt(&utf8(b"------== user1: check"));
 		{
 			tsv.next_tx(user2);
 			let prediction: Prediction<SUI> = tsv.take_shared();
-			prt(&prediction);
+			//prt(&prediction);
 
 			let amount = get_user<SUI>(&prediction, user1, user1_choice);
 			prt(&utf8(b"User1 has bet:"));
@@ -152,7 +185,7 @@ module package_addr::prediction {
 			ts::return_shared(prediction);
 		};
 		
-		// user1 bets on prediction again
+		prt(&utf8(b"------== user1: bet again"));
 		{
 			tsv.next_tx(user1);
 			let mut prediction: Prediction<SUI> = tsv.take_shared();
@@ -167,10 +200,12 @@ module package_addr::prediction {
 			//coin1.burn_for_testing();
 			ts::return_shared(prediction);
 		};
+
+		prt(&utf8(b"------== user1: check again"));
 		{
 			tsv.next_tx(user2);
 			let prediction: Prediction<SUI> = tsv.take_shared();
-			prt(&prediction);
+			//prt(&prediction);
 
 			let amount = get_user<SUI>(&prediction, user1, user1_choice);
 			prt(&utf8(b"User1 has bet:"));
