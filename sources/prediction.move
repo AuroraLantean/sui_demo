@@ -9,6 +9,7 @@ module package_addr::prediction {
 	use sui::table::{Self, Table};
 	use std::string::{utf8, String};
 	//use sui::balance::{Self, Balance};
+	use 0x1::option::{some, is_some, none, extract};
 
 	public struct UserData<Coin> has store, copy {
 		bets: vector<Coin>,
@@ -37,7 +38,6 @@ module package_addr::prediction {
 		});
 	}
 
-	// Internal function to bet
 	public entry fun bet<COIN>(prediction: &mut Prediction<COIN>, amount: u64, mut gasCoinId: Coin<COIN>, choice: u64, ctx: &mut TxContext) {
 
 		assert!(gasCoinId.value() >= amount , EAmountTooSmall);
@@ -69,11 +69,26 @@ module package_addr::prediction {
 		transfer::public_transfer(gasCoinId, sender);
 	}
 	
+	public fun get_user<COIN>(prediction: &Prediction<COIN>, user: address, index: u64): u64 {
+
+		let isFound = table::contains<address, UserData<Coin<COIN>>>(&prediction.users, user);
+		
+		//let user_data: option<UserData<Coin<COIN>>> = 
+		if(!isFound){
+			return 0;
+		};
+		let user_data = table::borrow<address, UserData<Coin<COIN>>>(&prediction.users, user);
+
+		//let bets = user_data.bets;
+		let coin = vector::borrow(&user_data.bets, index);//sui::coin::Coin<sui::sui::SUI>
+		coin.value()
+	}
+	
 	// === Tests ===
 	#[test_only] use sui::sui::SUI;
 	#[test_only] use sui::coin::value;
 	#[test_only] use sui::test_scenario::{Self as ts, Scenario};
-	#[test_only] use std::debug::print as p;
+	#[test_only] use std::debug::print as prt;
 			
 	#[test_only]
 	fun mint(sn: &mut Scenario, amount: u64): Coin<SUI> {
@@ -84,6 +99,8 @@ module package_addr::prediction {
 	fun test_init_prediction() {
 		let admin: address = @0xA;
 		let user1: address = @0x001;
+		let user2: address = @0x002;
+		let user3: address = @0x003;
 		let mut tsv = ts::begin(admin);
 		{
 			new<SUI>(utf8(b"Bitcoin"), utf8(b"Ethereum"), utf8(b"Solana"), utf8(b"Sui"), tsv.ctx());
@@ -92,29 +109,77 @@ module package_addr::prediction {
 		// read prediction object
 		{
 			tsv.next_tx(admin);
-			let mut prediction: Prediction<SUI> = tsv.take_shared();
-			p(&prediction);
+			let prediction: Prediction<SUI> = tsv.take_shared();
+			prt(&prediction);
 			assert!(prediction.owner == admin);
 			assert!(prediction.choices[0] == utf8(b"Bitcoin"));
 			ts::return_shared(prediction);
 		};
 
-		let amount = 1000;
-		// user bets on prediction
+		let init_amt: u64 = 1000;
+		let bet_amt1: u64 = 123;
+		let user1_choice: u64 = 0;
+		// user1 bets on prediction
 		{
 			tsv.next_tx(user1);
 			let mut prediction: Prediction<SUI> = tsv.take_shared();
-			let coin1 = mint(&mut tsv, amount);
+			let coin1 = mint(&mut tsv, init_amt);
 			//let coin = ts::take_from_sender<Coin<SUI>>(&mut tsv);
-			p(&value(&coin1));
-			assert!(value(&coin1) == amount, 1);
+			prt(&utf8(b"User1 has balance:"));
+			prt(&value(&coin1));
+			assert!(value(&coin1) == init_amt, 1);
 		
 			//invoke bet()
-			let choice = 0;
-			bet<SUI>(&mut prediction, 123, coin1, choice, tsv.ctx());
+			bet<SUI>(&mut prediction, bet_amt1, coin1, user1_choice, tsv.ctx());
 			//coin1.burn_for_testing();
 			ts::return_shared(prediction);
 		};
+		
+		// read prediction object
+		/*id: UID,
+		owner: address,
+		choices: vector<String>,
+		users: Table<address, UserData<Coin<COIN>>>,*/
+		{
+			tsv.next_tx(user2);
+			let prediction: Prediction<SUI> = tsv.take_shared();
+			prt(&prediction);
+
+			let amount = get_user<SUI>(&prediction, user1, user1_choice);
+			prt(&utf8(b"User1 has bet:"));
+			prt(&amount);
+			assert!(amount == bet_amt1);
+			ts::return_shared(prediction);
+		};
+		
+		// user1 bets on prediction again
+		{
+			tsv.next_tx(user1);
+			let mut prediction: Prediction<SUI> = tsv.take_shared();
+
+			let coin1 = mint(&mut tsv, init_amt);
+			/*prt(&utf8(b"User1 has balance:"));
+			prt(&value(&coin1));
+			assert!(value(&coin1) == (init_amt-bet_amt1), 1);*/
+		
+			//invoke bet()
+			bet<SUI>(&mut prediction, bet_amt1, coin1, user1_choice, tsv.ctx());
+			//coin1.burn_for_testing();
+			ts::return_shared(prediction);
+		};
+		{
+			tsv.next_tx(user2);
+			let prediction: Prediction<SUI> = tsv.take_shared();
+			prt(&prediction);
+
+			let amount = get_user<SUI>(&prediction, user1, user1_choice);
+			prt(&utf8(b"User1 has bet:"));
+			prt(&amount);
+			assert!(amount == bet_amt1*2);
+			ts::return_shared(prediction);
+		};
+		
+		
 		tsv.end();
 	}
 }
