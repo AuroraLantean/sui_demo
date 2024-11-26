@@ -51,6 +51,15 @@ sui client faucet
 sui client gas
 ```
 
+#### Test projects
+```
+test_counter
+test_sword
+test_nft
+test_coin
+test_market
+test_prediction
+```
 
 #### Publish Coin
 ```
