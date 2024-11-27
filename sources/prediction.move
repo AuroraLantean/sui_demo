@@ -8,7 +8,7 @@ module package_addr::prediction {
   use sui::balance::Balance;
 	//use sui::bag::{Self, Bag};
 	use sui::table::{Self, Table};
-	use std::string::{utf8, String, append};
+	use std::string::{String};//utf8, append
 	//use sui::balance::{Self, Balance};
 	//use 0x1::option::{some, is_some, none, extract};
 
@@ -33,7 +33,11 @@ module package_addr::prediction {
 		choices: vector<String>,
 		users: Table<address, UserData>,
 	}
-
+  // Owner Object
+  public struct OwnerCap has key { 
+    id: UID,
+    pred_id_rb: ID, 
+  }
 	const EAmountTooSmall: u64 = 0;
 	const EAmountTooBig: u64 = 1;
 	const EChoiceInvalid: u64 = 2;
@@ -49,8 +53,16 @@ module package_addr::prediction {
 
 		assert!(gasCoinId.value() > 0, EInsufficientGasCoinId);
 
+		let pred_id = object::new(ctx);
+		let pred_id_rb: ID = object::uid_to_inner(&pred_id);
+    // send the Owner Object
+    transfer::transfer(OwnerCap {
+      id: object::new(ctx),
+      pred_id_rb,
+    }, owner);//tx_context::sender(ctx)
+
 		let prediction = Prediction {
-			id: object::new(ctx),
+			id: pred_id,
 			owner: owner,//ctx.sender(),
 			balance: gasCoinId.into_balance(),
 			choices,
@@ -114,8 +126,10 @@ module package_addr::prediction {
 		transfer::public_transfer(gasCoinId, ctx.sender());
 	}
 	
-  public entry fun withdraw<COIN>(prediction: &mut Prediction<COIN>, amount: u64, ctx: &mut TxContext) {
-		assert!(ctx.sender() == prediction.owner, ENotOwner);
+  public entry fun withdraw<COIN>(prediction: &mut Prediction<COIN>, owner_cap: &OwnerCap, amount: u64, ctx: &mut TxContext) {
+
+		assert!(&owner_cap.pred_id_rb == object::uid_as_inner(&prediction.id), ENotOwner);
+		//assert!(ctx.sender() == prediction.owner, ENotOwner);
 		assert!(amount <= get_balance(prediction), EAmountTooBig);
 		let coin = coin::take(&mut prediction.balance, amount, ctx);
 		transfer::public_transfer(coin, prediction.owner);
@@ -126,6 +140,7 @@ module package_addr::prediction {
 	#[test_only] use sui::coin::value;
 	#[test_only] use sui::test_scenario::{Self as ts, Scenario};
 	#[test_only] use std::debug::print as prt;
+	#[test_only] use std::string::utf8;
 			
 	#[test_only]
 	fun mint(sn: &mut Scenario, amount: u64): Coin<SUI> {
@@ -193,7 +208,7 @@ module package_addr::prediction {
 		prt(&utf8(b"------== user1 balance"));
 		{
 			tsv.next_tx(user2);
-			let coin1b: Coin<SUI> = ts::take_from_address<Coin<SUI>>(&tsv, user1);//ts::take_from_sender<Coin<SUI>>(&mut tsv);
+			let coin1b: Coin<SUI> = ts::take_from_address<Coin<SUI>>(&tsv, user1);
 			assert!(coin1b.value()== mint_amt-bet_amt1, 0);
 			ts::return_to_address(user1, coin1b);
 		};
@@ -246,9 +261,11 @@ prt(&utf8(b"------== Owner: withdraw"));
 		{
 			tsv.next_tx(owner);
 			let mut prediction: Prediction<SUI> = tsv.take_shared();
+			let owner_cap = ts::take_from_sender<OwnerCap>(&tsv);
 			
 			let amount = bet_amt1 * 2;
-			withdraw<SUI>(&mut prediction, amount, tsv.ctx());
+			withdraw<SUI>(&mut prediction, &owner_cap, amount, tsv.ctx());
+			ts::return_to_sender(&tsv, owner_cap);
 			
 			tsv.next_tx(user2);
 			prt(&utf8(b"Prediction balance:"));
