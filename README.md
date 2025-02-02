@@ -1,5 +1,8 @@
 # Sui Demo
 
+## Course
+https://academy.eincode.com/courses/take/sui-dapps-with-move-react-build-real-projects/lessons/61810345-proposal-view
+
 ## Installation and Setup
 Install Sui: https://docs.sui.io/guides/developer/getting-started/sui-install
 

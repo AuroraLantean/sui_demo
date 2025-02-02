@@ -6,4 +6,5 @@ examples
 .aptos
 .env*
 removed.rs
+justfile
 zz*.sh
