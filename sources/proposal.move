@@ -71,3 +71,41 @@ public fun remove(self: Proposal, _admin_cap: &AdminCap) {
     table::drop(voters);
     object::delete(id)
 }
+
+public struct VoteProofNFT has key {
+    id: UID,
+    proposal_id: ID,
+    name: String,
+    description: String,
+    url: Url,
+}
+
+public struct VoteRegistered has copy, drop {
+    proposal_id: ID,
+    voter: address,
+    vote_yes: bool,
+}
+
+// === Public Functions ===
+
+public fun vote(self: &mut Proposal, vote_yes: bool, clock: &Clock, ctx: &mut TxContext) {
+    assert!(self.expiration > clock.timestamp_ms(), EProposalExpired);
+    assert!(self.is_active(), EProposalDelisted);
+    assert!(!self.voters.contains(ctx.sender()), EDuplicateVote);
+
+    if (vote_yes) {
+        self.voted_yes_count = self.voted_yes_count + 1;
+    } else {
+        self.voted_no_count = self.voted_no_count + 1;
+    };
+
+    self.voters.add(ctx.sender(), vote_yes);
+    issue_vote_proof(self, vote_yes, ctx);
+
+    event::emit(VoteRegistered {
+        proposal_id: self.id.to_inner(),
+        voter: ctx.sender(),
+        vote_yes
+    });
+}
+
