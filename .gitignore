@@ -6,5 +6,6 @@ examples
 .aptos
 .env*
 removed.rs
+todo.rs
 justfile
-zz*.sh
+clients

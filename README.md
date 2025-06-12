@@ -8,7 +8,6 @@ Install Sui: https://docs.sui.io/guides/developer/getting-started/sui-install
 
 setup accounts
 ```
-brew install sui
 sui --version
 make new_addr
 make activate_addr

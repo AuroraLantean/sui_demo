@@ -5,7 +5,7 @@ use sui::table::{Self, Table};
 use sui::url::{Url, new_unsafe_from_bytes};
 use sui::clock::{Clock};
 use sui::event;
-use package_addr::dashboard::AdminCap;
+use package_addr::prediction::AdminCap;
 
 const EDuplicateVote: u64 = 0;
 const EProposalDelisted: u64 = 1;
@@ -107,5 +107,41 @@ public fun vote(self: &mut Proposal, vote_yes: bool, clock: &Clock, ctx: &mut Tx
         voter: ctx.sender(),
         vote_yes
     });
+}
+
+public fun is_active(self: &Proposal): bool {
+    let status = self.status();
+
+    match (status) {
+        ProposalStatus::Active => true,
+        _ => false,
+    }
+}
+public fun status(self: &Proposal): &ProposalStatus {
+    &self.status
+}
+
+fun issue_vote_proof(proposal: &Proposal, vote_yes: bool, ctx: &mut TxContext) {
+    let mut name = b"NFT ".to_string();
+    name.append(proposal.title);
+
+    let mut description = b"Proof of votting on ".to_string();
+    let proposal_address = object::id_address(proposal).to_string();
+    description.append(proposal_address);
+
+    let vote_yes_image = new_unsafe_from_bytes(b"https://thrangra.sirv.com/vote_yes_nft.jpg");
+    let vote_no_image = new_unsafe_from_bytes(b"https://thrangra.sirv.com/vote_no_nft.jpg");
+
+    let url = if (vote_yes) { vote_yes_image } else { vote_no_image };
+
+    let proof = VoteProofNFT {
+        id: object::new(ctx),
+        proposal_id: proposal.id.to_inner(),
+        name,
+        description,
+        url
+    };
+
+    transfer::transfer(proof, ctx.sender());
 }
 
