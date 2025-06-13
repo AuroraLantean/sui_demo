@@ -3,22 +3,30 @@ name = "demo"
 version = "0.0.1"
 edition = "2024.beta"
 # edition = "legacy" to use legacy (pre-2024) Move
-# license = ""           # e.g., "MIT", "GPL", "Apache 2.0"
+# license = ""  #"MIT", "GPL", "Apache 2.0"
 # authors = "John Snow (johnsnow@noemail.com)"]
 #published-at = "0x004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet" }
+# MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
 # Revision can be a branch, a tag, and a commit hash; override = true
 
+# MyLocalPackage = { local = "../path/to" }
+
+# To resolve a version conflict and force a specific version for dependency
+# override use `override = true`
+# Override = { local = "../conflicting/version", override = true }
+
 [addresses]
-#demo = "004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
+# Named addresses will be accessible in Move as `@name`
+#package_addr = "004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
 package_addr = "0x0"
 #alice = "0xA11CE"
 
 [dev-addresses]
-# The dev-addresses section allows overwriting named addresses for the `--test`
-# and `--dev` modes.
+# The dev-addresses section allows overwriting named addresses for the `--test` and `--dev` mode. You can introduce test-only dependencies here.
+# Local = { local = "../path/to/dev-build" }
+
 # alice = "0xB0B"
 #package:0x004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25
 #TreasureCap:0x9127f84335a492a8b6784c1a684724be164caa5e5556b52c9b2b39f0de098921

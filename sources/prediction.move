@@ -1,16 +1,14 @@
 /*Any user can make a new game with a list of options, then the user himself(game owner) and other users can bet on one/some/all option(s).
 
 After some time, the game owner can settle the game outcome and withdraw fees.
-And users who bet can claim rewards if they win.*/
-module package_addr::prediction {
-	//use sui::dynamic_field as df;
-	use sui::coin::{Self, Coin};
-  use sui::balance::Balance;
-	//use sui::bag::{Self, Bag};
-	use sui::table::{Self, Table};
-	use std::string::{String};//utf8, append
-	//use sui::balance::{Self, Balance};
-	//use 0x1::option::{some, is_some, none, extract};
+And users who bet can claim rewards if they win.
+*/
+module package_addr::prediction;
+use std::string::{String};//utf8, append
+use sui::{coin::{Self, Coin}, balance::Balance, table::{Self, Table}};
+//use sui::dynamic_field as df;
+//use sui::bag::{Self, Bag};
+//use 0x1::option::{some, is_some, none, extract};
 
 	public struct UserData has store, copy {
 		bets: vector<u64>,
@@ -18,6 +16,7 @@ module package_addr::prediction {
   public struct AdminCap has key {
     id: UID
   }
+  //runs at publication time
   fun init(ctx: &mut TxContext) {
 		let admin_cap = AdminCap {
 				id: object::new(ctx)
@@ -286,4 +285,3 @@ prt(&utf8(b"------== Owner: withdraw"));
 			ts::return_shared(prediction);
 		};
 		*/
-}
