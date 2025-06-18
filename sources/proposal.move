@@ -23,7 +23,7 @@ public struct Proposal has key {
     voted_yes_count: u64,
     voted_no_count: u64,
     expiration: u64,
-    creator: address,
+    owner: address,
     status: ProposalStatus,
     voters: Table<address, bool>,
 }
@@ -31,7 +31,7 @@ public struct Proposal has key {
 // === Admin Functions ===
 
 public fun add(
-    _admin_cap: &AdminCap,
+   // _admin_cap: &AdminCap,
     title: String,
     description: String,
     expiration: u64,
@@ -44,7 +44,7 @@ public fun add(
         voted_yes_count: 0,
         voted_no_count: 0,
         expiration,
-        creator: ctx.sender(),
+        owner: ctx.sender(),
         status: ProposalStatus::Active,
         voters: table::new(ctx),
     };
@@ -65,7 +65,7 @@ public fun remove(self: Proposal, _admin_cap: &AdminCap) {
         expiration: _,
         status: _,
         voters,
-        creator: _,
+        owner: _,
     } = self;
 
     table::drop(voters);
@@ -117,8 +117,30 @@ public fun is_active(self: &Proposal): bool {
         _ => false,
     }
 }
+//read functions as Move security feature
 public fun status(self: &Proposal): &ProposalStatus {
     &self.status
+}
+public fun title(self: &Proposal): String {
+    self.title
+}
+public fun description(self: &Proposal): String {
+    self.description
+}
+public fun voted_yes_count(self: &Proposal): u64 {
+    self.voted_yes_count
+}
+public fun voted_no_count(self: &Proposal): u64 {
+    self.voted_no_count
+}
+public fun expiration(self: &Proposal): u64 {
+    self.expiration
+}
+public fun owner(self: &Proposal): address {
+    self.owner
+}
+public fun voters(self: &Proposal): &Table<address, bool> {
+    &self.voters
 }
 
 fun issue_vote_proof(proposal: &Proposal, vote_yes: bool, ctx: &mut TxContext) {

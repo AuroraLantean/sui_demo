@@ -1,5 +1,8 @@
 # Sui Demo
 
+## TODO
+https://www.movebit.xyz/blog/post/Sui-Objects-Security-Principles-and-Best-Practices.html
+
 ## Course
 https://academy.eincode.com/courses/take/sui-dapps-with-move-react-build-real-projects/lessons/61810345-proposal-view
 

@@ -159,7 +159,7 @@ use sui::{coin::{Self, Coin}, balance::Balance, table::{Self, Table}};
 		let owner: address = @0xF;
 		let user1: address = @0x001;
 		let user2: address = @0x002;
-		let user3: address = @0x003;
+		let _user3: address = @0x003;
 		let mint_amt: u64 = 1000;
 
 		let mut tsv = ts::begin(admin);
