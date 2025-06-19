@@ -1,5 +1,9 @@
 module package_addr::proposal_box;//must match this file name
 
+use sui::types;
+const EDuplicateProposal: u64 = 0;
+const EInvalidOtw: u64 = 1;
+
 public struct ProposalBox has key {
     id: UID,
     proposals_ids: vector<ID>
@@ -15,13 +19,15 @@ public struct PROPOSAL_BOX has drop {}
 
 fun init(otw: PROPOSAL_BOX, ctx: &mut TxContext) {
     //let admin_cap = AdminCap {id: object::new(ctx)};
-    new_init(otw, ctx);
+    new_shared_obj(otw, ctx);
     transfer::transfer(
       AdminCap {id: object::new(ctx)},
       ctx.sender()
     );
 }
-fun new_init(_otw: PROPOSAL_BOX, ctx: &mut TxContext) {
+public fun new_shared_obj(otw: PROPOSAL_BOX, ctx: &mut TxContext) {
+    assert!(types::is_one_time_witness(&otw), EInvalidOtw);
+    
     let box = ProposalBox {
         id: object::new(ctx),
         proposals_ids: vector[]
@@ -29,15 +35,9 @@ fun new_init(_otw: PROPOSAL_BOX, ctx: &mut TxContext) {
     transfer::share_object(box);
 }
 
-public fun new(_admin_cap: &AdminCap, ctx: &mut TxContext) {
-    let box = ProposalBox {
-        id: object::new(ctx),
-        proposals_ids: vector[]
-    };
-    transfer::share_object(box);
-}
-
-public fun register_proposal(self: &mut ProposalBox, proposal_id: ID) {
+public fun register(self: &mut ProposalBox, proposal_id: ID) {
+    assert!(!self.proposals_ids.contains(&proposal_id), EDuplicateProposal);
+    
     self.proposals_ids.push_back(proposal_id);
 }
 
@@ -49,6 +49,10 @@ public fun issue_admin_cap(ctx: &mut TxContext) {
     AdminCap {id: object::new(ctx)},
     ctx.sender()
     );
+}
+#[test_only]
+public fun new_otw(_ctx: &mut TxContext): PROPOSAL_BOX {
+    PROPOSAL_BOX {}
 }
 
 #[test]

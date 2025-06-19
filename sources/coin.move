@@ -155,7 +155,7 @@ module package_addr::dragoncoin {
 	#[test]
 	public fun test_coin(){
 		use sui::test_scenario as ts;
-		use std::debug::print as p;
+		use std::debug::print as prt;
 		
 		let admin: address = @0xA;
 		let user1: address = @0x001;
@@ -170,13 +170,13 @@ module package_addr::dragoncoin {
 		{
 			let mut cap = ts::take_from_sender<TreasuryCap<DRAGONCOIN>>(sn);
 			let total_supply = get_total_supply(&cap);
-			p(&total_supply);
+			prt(&total_supply);
 			assert!(total_supply == 0, 1);
 			
 			mint(&mut cap, user1, amount, ts::ctx(sn));
 			
 			let total_supply = get_total_supply(&cap);
-			p(&total_supply);
+			prt(&total_supply);
 			assert!(total_supply == amount, 1);
 			ts::return_to_sender(sn, cap);
 		};
@@ -184,7 +184,7 @@ module package_addr::dragoncoin {
 		ts::next_tx(sn, user1);
 		{
 			let coin = ts::take_from_sender<Coin<DRAGONCOIN>>(sn);//
-			p(&value(&coin));
+			prt(&value(&coin));
 			assert!(value(&coin) == amount, 1);
 			//ts::return_to_sender(sn, coin);
 
@@ -199,23 +199,23 @@ module package_addr::dragoncoin {
 		{
 			let metadata = ts::take_from_sender<CoinMetadata<DRAGONCOIN>>(sn);
 			let decimals = get_decimals_coin(&metadata);
-			p(&decimals);
+			prt(&decimals);
 			assert!(decimals == 6, 1);
 
 			let name = get_name_coin(&metadata);
-			p(&name);
+			prt(&name);
 			assert!(name == utf8(b"Dragon coin"), 1);
 
 			let descriptn = get_description_coin(&metadata);
-			p(&descriptn);
+			prt(&descriptn);
 			assert!(descriptn == utf8(b"Dragon coin is the one coin to rule them all"), 1);
 
 			let url = get_icon_url_coin(&metadata).extract().inner_url();//sui::url::Url
-			p(&url);
+			prt(&url);
 			assert!(url == (b"icon_url").to_ascii_string(), 1);
 
 			let symbol = get_symbol_coin(&metadata);
-			p(&symbol);
+			prt(&symbol);
 			assert!(symbol == (b"DRAG").to_ascii_string(), 1);
 			
 			ts::return_to_sender(sn, metadata);

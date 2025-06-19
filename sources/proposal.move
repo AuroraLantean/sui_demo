@@ -28,7 +28,6 @@ public struct Proposal has key {
 }
 
 // === Admin Functions ===
-
 public fun add(
     _admin_cap: &AdminCap,
     title: String,
@@ -47,10 +46,8 @@ public fun add(
         status: ProposalStatus::Active,
         voters: table::new(ctx),
     };
-
     let id = proposal.id.to_inner();
     transfer::share_object(proposal);
-
     id
 }
 
@@ -86,7 +83,6 @@ public struct VoteRegistered has copy, drop {
 }
 
 // === Public Functions ===
-
 public fun vote(self: &mut Proposal, vote_yes: bool, clock: &Clock, ctx: &mut TxContext) {
     assert!(self.expiration > clock.timestamp_ms(), EProposalExpired);
     assert!(self.is_active(), EProposalDelisted);
