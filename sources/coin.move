@@ -159,8 +159,8 @@ module package_addr::dragoncoin {
 		
 		let admin: address = @0xA;
 		let user1: address = @0x001;
-    let mut tsv = ts::begin(admin);
-    let sn = &mut tsv;
+    let mut tss = ts::begin(admin);
+    let sn = &mut tss;
 		{
 			init(DRAGONCOIN{}, ts::ctx(sn));
 		};
@@ -232,6 +232,6 @@ module package_addr::dragoncoin {
 			ts::return_to_sender(sn, cap);
 			ts::return_to_sender(sn, metadata);
 		};
-		tsv.end();
+		tss.end();
 	}
 }

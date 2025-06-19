@@ -1,12 +1,11 @@
-module package_addr::proposal;
+module package_addr::proposal;//must match this file name
 
 use std::string::String;
 use sui::table::{Self, Table};
 use sui::url::{Url, new_unsafe_from_bytes};
 use sui::clock::{Clock};
 use sui::event;
-use package_addr::prediction::AdminCap;
-
+use package_addr::proposal_box::AdminCap;
 const EDuplicateVote: u64 = 0;
 const EProposalDelisted: u64 = 1;
 const EProposalExpired: u64 = 2;
@@ -31,7 +30,7 @@ public struct Proposal has key {
 // === Admin Functions ===
 
 public fun add(
-   // _admin_cap: &AdminCap,
+    _admin_cap: &AdminCap,
     title: String,
     description: String,
     expiration: u64,

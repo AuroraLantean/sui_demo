@@ -1,23 +1,31 @@
 #[test_only]
 module package_addr::proposal_box_test;//must match this file name
 
-// uncomment this line to import the module
-// use proj1::proj1;
-//const ENotImplemented: u64 = 0;
+use sui::test_scenario as ts;
+use package_addr::proposal::{Self, Proposal};
+use package_addr::proposal_box::{Self, AdminCap};
+
+const ENotImplemented: u64 = 0;
 
 #[test]
-fun test_proposal_add() {
-    use sui::test_scenario as ts;
-    use package_addr::proposal::{Self, Proposal};
-    //use package_addr::proposal_box::{Self, Proposal_box};
+fun test_add_proposal_with_admin_cap() {
     let admin = @0xA;
 
     let mut tss = ts::begin(admin);
+    {
+        proposal_box::issue_admin_cap(tss.ctx());
+    };
+
     //make a new poposal
+    tss.next_tx(admin);
     {
       let title = b"Hi".to_string();
       let desc = b"There".to_string();
-      proposal::add( title, desc, 2000000000, tss.ctx());
+      let admin_cap = tss.take_from_sender<AdminCap>();
+      
+      proposal::add( &admin_cap,title, desc, 2000000000, tss.ctx());
+      
+      ts::return_to_sender(&tss, admin_cap);
     };
     
     tss.next_tx(admin);
@@ -35,8 +43,40 @@ fun test_proposal_add() {
     tss.end();
 }
 
-/*#[test, expected_failure(abort_code = ::proj1::proj1_tests::ENotImplemented)]
-fun test_proj1_fail() {
-    abort ENotImplemented
-}*/
+//EEmptyInventory: u64 = 3 from take_from_sender or take_from_address
+#[test, expected_failure(abort_code = ts::EEmptyInventory)]
+fun test_add_proposal_no_admin_cap(){
+    //abort ENotImplemented
+    let user = @0xB0B;
+    let admin = @0xA01;
+
+    let mut tss = ts::begin(admin);
+    {
+        proposal_box::issue_admin_cap(tss.ctx());
+    };
+
+    tss.next_tx(user);
+    {
+        let title = b"Hi".to_string();
+        let desc = b"There".to_string();
+        let admin_cap = tss.take_from_sender<AdminCap>();
+
+        proposal::add(
+            &admin_cap,
+            title,
+            desc,
+            2000000000,
+            tss.ctx()
+        );
+        ts::return_to_sender(&tss, admin_cap);
+    };
+    tss.end();
+}
+
+
+
+
+
+
+
 
