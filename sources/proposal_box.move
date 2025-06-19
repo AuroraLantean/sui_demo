@@ -1,30 +1,43 @@
 module package_addr::proposal_box;//must match this file name
 
-public struct Proposalbox has key {
+public struct ProposalBox has key {
     id: UID,
     proposals_ids: vector<ID>
 }
+public fun proposals_ids(self: &ProposalBox): &vector<ID> {
+    &self.proposals_ids
+}
+
 public struct AdminCap has key {
     id: UID,
 }
+public struct PROPOSAL_BOX has drop {}
 
-fun init(ctx: &mut TxContext) {
-    new(ctx);
+fun init(otw: PROPOSAL_BOX, ctx: &mut TxContext) {
+    //let admin_cap = AdminCap {id: object::new(ctx)};
+    new_init(otw, ctx);
     transfer::transfer(
-        AdminCap {id: object::new(ctx)},
-        ctx.sender()
+      AdminCap {id: object::new(ctx)},
+      ctx.sender()
     );
 }
-
-public fun new(ctx: &mut TxContext) {
-    let box = Proposalbox {
+fun new_init(_otw: PROPOSAL_BOX, ctx: &mut TxContext) {
+    let box = ProposalBox {
         id: object::new(ctx),
         proposals_ids: vector[]
     };
     transfer::share_object(box);
 }
 
-public fun register_proposal(self: &mut Proposalbox, proposal_id: ID) {
+public fun new(_admin_cap: &AdminCap, ctx: &mut TxContext) {
+    let box = ProposalBox {
+        id: object::new(ctx),
+        proposals_ids: vector[]
+    };
+    transfer::share_object(box);
+}
+
+public fun register_proposal(self: &mut ProposalBox, proposal_id: ID) {
     self.proposals_ids.push_back(proposal_id);
 }
 
@@ -46,15 +59,16 @@ fun test_module_init() {
     //init this module
     let mut tss = ts::begin(admin);
     {
-        init(tss.ctx());
+      let otw = PROPOSAL_BOX{};
+        init(otw,tss.ctx());
     };
 
-    //check initial shared objects, easier to test it here without writing read functions
+    //check initial conditions of shared objects here, OR make read functions because the field shared objects can only be accessed within the module
     tss.next_tx(admin);
     {
-        let proposalBox = tss.take_shared<Proposalbox>();
-        assert!(proposalBox.proposals_ids.is_empty());
-        ts::return_shared(proposalBox);
+        let box = tss.take_shared<ProposalBox>();
+        assert!(box.proposals_ids.is_empty());
+        ts::return_shared(box);
     };
     tss.end();
 }
