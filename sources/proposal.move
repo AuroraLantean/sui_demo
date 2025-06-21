@@ -6,6 +6,7 @@ use sui::url::{Url, new_unsafe_from_bytes};
 use sui::clock::{Clock};
 use sui::event;
 use package_addr::proposal_box::AdminCap;
+
 const EDuplicateVote: u64 = 0;
 const EProposalDelisted: u64 = 1;
 const EProposalExpired: u64 = 2;
@@ -83,25 +84,25 @@ public struct VoteRegistered has copy, drop {
 }
 
 // === Public Functions ===
-public fun vote(self: &mut Proposal, vote_yes: bool, clock: &Clock, ctx: &mut TxContext) {
-    assert!(self.expiration > clock.timestamp_ms(), EProposalExpired);
-    assert!(self.is_active(), EProposalDelisted);
+public fun vote(self: &mut Proposal, vote_yes: bool,  ctx: &mut TxContext) {
     assert!(!self.voters.contains(ctx.sender()), EDuplicateVote);
+    /*clock: &Clock,
+    assert!(self.expiration > clock.timestamp_ms(), EProposalExpired);
+    assert!(self.is_active(), EProposalDelisted);*/
 
     if (vote_yes) {
         self.voted_yes_count = self.voted_yes_count + 1;
     } else {
         self.voted_no_count = self.voted_no_count + 1;
     };
-
     self.voters.add(ctx.sender(), vote_yes);
-    issue_vote_proof(self, vote_yes, ctx);
+    /*issue_vote_proof(self, vote_yes, ctx);
 
     event::emit(VoteRegistered {
         proposal_id: self.id.to_inner(),
         voter: ctx.sender(),
         vote_yes
-    });
+    });*/
 }
 
 public fun is_active(self: &Proposal): bool {

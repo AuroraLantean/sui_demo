@@ -35,7 +35,7 @@ public fun new_shared_obj(otw: PROPOSAL_BOX, ctx: &mut TxContext) {
     transfer::share_object(box);
 }
 
-public fun register(self: &mut ProposalBox, proposal_id: ID) {
+public fun register(self: &mut ProposalBox, _admin_cap: &AdminCap, proposal_id: ID) {
     assert!(!self.proposals_ids.contains(&proposal_id), EDuplicateProposal);
     
     self.proposals_ids.push_back(proposal_id);
