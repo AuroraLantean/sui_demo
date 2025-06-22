@@ -187,6 +187,41 @@ fun test_add_proposal_no_admin_cap(){
     tss.end();
 }
 
+#[test, expected_failure(abort_code = package_addr::proposal::EProposalExpired)]
+fun test_voting_expiration() {
+    let bob = @0xB0;
+    let admin = @0xAd;
+
+    let mut tss = ts::begin(admin);
+    {
+        proposal_box::issue_admin_cap(tss.ctx());
+    };
+
+    tss.next_tx(admin);
+    {
+        let admin_cap = tss.take_from_sender<AdminCap>();
+
+        add_proposal(&admin_cap, b"title", b"desc", tss.ctx());
+
+        ts::return_to_sender(&tss, admin_cap);
+    };
+
+    tss.next_tx(bob);
+    {
+        let mut proposal = tss.take_shared<Proposal>();
+
+        let mut test_clock = clock::create_for_testing(tss.ctx());
+
+        test_clock.set_for_testing(300000000000);
+
+        proposal.vote(true, &test_clock, tss.ctx());
+
+        ts::return_shared(proposal);
+        test_clock.destroy_for_testing();
+    };
+    tss.end();
+}
+
 #[test]
 fun test_change_proposal_status() {
     let admin = @0xAd;
@@ -237,7 +272,42 @@ fun test_change_proposal_status() {
     tss.end();
 }
 
+//EEmptyInventory: u64 = 3 from take_from_sender or take_from_address
+#[test, expected_failure(abort_code = ts::EEmptyInventory)]
+fun test_remove_proposal() {
+    let admin = @0xAd;
 
+    let mut tss = ts::begin(admin);
+    {
+        proposal_box::issue_admin_cap(tss.ctx());
+    };
+
+    tss.next_tx(admin);
+    {
+        let admin_cap = tss.take_from_sender<AdminCap>();
+
+        add_proposal(&admin_cap, b"title", b"desc", tss.ctx());
+        ts::return_to_sender(&tss, admin_cap);
+    };
+
+    tss.next_tx(admin);
+    {
+        let proposal = tss.take_shared<Proposal>();
+
+        let admin_cap = tss.take_from_sender<AdminCap>();
+
+        proposal.remove(&admin_cap);
+        tss.return_to_sender(admin_cap);
+    };
+
+    //take removed object
+    tss.next_tx(admin);
+    {
+        let proposal = tss.take_shared<Proposal>();
+        ts::return_shared(proposal);
+    };
+    tss.end();
+}
 
 
 

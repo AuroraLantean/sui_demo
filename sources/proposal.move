@@ -73,6 +73,12 @@ public fun change_status(self: &mut Proposal,  _admin_cap: &AdminCap, status: Pr
 ) {
     self.status = status;
 }
+public fun set_active_status(self: &mut Proposal, admin_cap: &AdminCap) {
+    self.change_status(admin_cap,  ProposalStatus::Active);
+}
+public fun set_delisted_status(self: &mut Proposal, admin_cap: &AdminCap) {
+    self.change_status(admin_cap,  ProposalStatus::Delisted);
+}
 
 public struct VoteProofNFT has key {
     id: UID,
@@ -106,16 +112,23 @@ public fun vote(self: &mut Proposal, vote_boo: bool, clock: &Clock,  ctx: &mut T
     self.voters.add(ctx.sender(), vote_boo);
     issue_vote_proof(self, vote_boo, ctx);
 
-    /*event::emit(VoteEvent {
+    event::emit(VoteEvent {
         proposal_id: self.id.to_inner(),
         voter: ctx.sender(),
         vote_value: vote_boo
-    });*/
+    });
 }
 
 //read functions as Move security feature
 public fun status(self: &Proposal): &ProposalStatus {
     &self.status
+}
+public fun is_active(self: &Proposal): bool {
+    let status = self.status();
+    match (status) {
+        ProposalStatus::Active => true,
+        _ => false,
+    }
 }
 public fun title(self: &Proposal): String {
     self.title
@@ -164,19 +177,3 @@ fun issue_vote_proof(proposal: &Proposal, vote_boo: bool, ctx: &mut TxContext) {
 }
 
 // === Test Functions ===
-#[test_only]
-public fun is_active(self: &Proposal): bool {
-    let status = self.status();
-    match (status) {
-        ProposalStatus::Active => true,
-        _ => false,
-    }
-}
-#[test_only]
-public fun set_active_status(self: &mut Proposal, admin_cap: &AdminCap) {
-    self.change_status(admin_cap,  ProposalStatus::Active);
-}
-#[test_only]
-public fun set_delisted_status(self: &mut Proposal, admin_cap: &AdminCap) {
-    self.change_status(admin_cap,  ProposalStatus::Delisted);
-}

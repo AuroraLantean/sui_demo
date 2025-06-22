@@ -18,7 +18,6 @@ public struct AdminCap has key {
 public struct PROPOSAL_BOX has drop {}
 
 fun init(otw: PROPOSAL_BOX, ctx: &mut TxContext) {
-    //let admin_cap = AdminCap {id: object::new(ctx)};
     new_shared_obj(otw, ctx);
     transfer::transfer(
       AdminCap {id: object::new(ctx)},
@@ -27,7 +26,7 @@ fun init(otw: PROPOSAL_BOX, ctx: &mut TxContext) {
 }
 public fun new_shared_obj(otw: PROPOSAL_BOX, ctx: &mut TxContext) {
     assert!(types::is_one_time_witness(&otw), EInvalidOtw);
-    
+    //let admin_cap = AdminCap {id: object::new(ctx)};    
     let box = ProposalBox {
         id: object::new(ctx),
         proposals_ids: vector[]

@@ -8,3 +8,4 @@ examples
 justfile
 clients
 images
+script
