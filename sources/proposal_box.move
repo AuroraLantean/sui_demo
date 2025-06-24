@@ -3,6 +3,7 @@ module package_addr::proposal_box;//must match this file name
 use sui::types;
 const EDuplicateProposal: u64 = 0;
 const EInvalidOtw: u64 = 1;
+const EVecIndexOutOfBound: u64 = 2;
 
 public struct ProposalBox has key {
     id: UID,
@@ -38,6 +39,11 @@ public fun register(self: &mut ProposalBox, _admin_cap: &AdminCap, proposal_id: 
     assert!(!self.proposals_ids.contains(&proposal_id), EDuplicateProposal);
     
     self.proposals_ids.push_back(proposal_id);
+}
+public fun remove(self: &mut ProposalBox, _admin_cap: &AdminCap, index: u64) {
+    assert!(index < self.proposals_ids.length(), EVecIndexOutOfBound);
+    
+    self.proposals_ids.remove( index);
 }
 
 

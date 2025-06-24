@@ -10,14 +10,15 @@ use package_addr::proposal_box::{Self, AdminCap, ProposalBox};
 const EWrongVoteCount: u64 = 0;
 const EWrongNftUrl: u64 = 1;
 const EWrongStatus: u64 = 2;
+const CExpiry: u64 = 1782117752000;
 
-fun add_proposal(admin_cap: &AdminCap, title: vector<u8>, desc: vector<u8>, ctx: &mut TxContext): ID  {
+fun new_proposal(admin_cap: &AdminCap, title: vector<u8>, desc: vector<u8>, ctx: &mut TxContext): ID  {
     //let title = b"title".to_string();
-    let proposal_id = proposal::add(
+    let proposal_id = proposal::new(
         admin_cap,
         title.to_string(),
         desc.to_string(),
-        300000000000,
+        CExpiry,
         ctx
     );
     proposal_id
@@ -33,6 +34,7 @@ fun test_register_proposal_as_admin() {
         proposal_box::new_shared_obj(otw, tss.ctx());
     };
 
+    //new proposal, register, remove
     tss.next_tx(admin);
     {
         let mut box = tss.take_shared<ProposalBox>();
@@ -42,15 +44,19 @@ fun test_register_proposal_as_admin() {
         let proposals_ids = box.proposals_ids();
         assert!(proposals_ids.is_empty());
     
-        let proposal_id = add_proposal(&admin_cap, b"title", b"desc", tss.ctx());
+        let proposal_id = new_proposal(&admin_cap, b"title", b"desc", tss.ctx());
     
         box.register(&admin_cap,proposal_id);
 
         let proposals_ids = box.proposals_ids();
 
         let proposal_exists = proposals_ids.contains(&proposal_id);
-
         assert!(proposal_exists);
+
+        box.remove(&admin_cap,0);
+        let proposals_ids = box.proposals_ids();
+        assert!(proposals_ids.is_empty());
+
         tss.return_to_sender(admin_cap);
         ts::return_shared(box);
     };
@@ -58,7 +64,7 @@ fun test_register_proposal_as_admin() {
 }
 
 #[test]
-fun test_add_proposal_with_admin_cap() {
+fun test_new_proposal_with_admin_cap() {
     let admin = @0xA;
     let bob = @0xB0;
     let alice = @0xA1;
@@ -73,7 +79,7 @@ fun test_add_proposal_with_admin_cap() {
     {
       let admin_cap = tss.take_from_sender<AdminCap>();
       
-      add_proposal(&admin_cap,b"title", b"desc",  tss.ctx());
+      new_proposal(&admin_cap,b"title", b"desc",  tss.ctx());
       ts::return_to_sender(&tss, admin_cap);
     };
     
@@ -82,7 +88,7 @@ fun test_add_proposal_with_admin_cap() {
         let prop1 = tss.take_shared<Proposal>();
         assert!(prop1.title() == b"title".to_string());
         assert!(prop1.description() == b"desc".to_string());
-        assert!(prop1.expiration() == 300000000000);
+        assert!(prop1.expiration() == CExpiry);
         assert!(prop1.voted_no_count() == 0);
         assert!(prop1.voted_yes_count() == 0);
         assert!(prop1.owner() == admin);
@@ -146,7 +152,7 @@ fun test_duplicate_voting() {
     tss.next_tx(admin);
     {
         let admin_cap = tss.take_from_sender<AdminCap>();
-        add_proposal(&admin_cap, b"title", b"desc", tss.ctx());
+        new_proposal(&admin_cap, b"title", b"desc", tss.ctx());
         ts::return_to_sender(&tss, admin_cap);
     };
 
@@ -168,7 +174,7 @@ fun test_duplicate_voting() {
 
 //EEmptyInventory: u64 = 3 from take_from_sender or take_from_address
 #[test, expected_failure(abort_code = ts::EEmptyInventory)]
-fun test_add_proposal_no_admin_cap(){
+fun test_new_proposal_no_admin_cap(){
     //abort ENotImplemented
     let user = @0xB0;
     let admin = @0xad;
@@ -182,7 +188,7 @@ fun test_add_proposal_no_admin_cap(){
     {
         let admin_cap = tss.take_from_sender<AdminCap>();
 
-        add_proposal(&admin_cap, b"title", b"desc", tss.ctx());        ts::return_to_sender(&tss, admin_cap);
+        new_proposal(&admin_cap, b"title", b"desc", tss.ctx());        ts::return_to_sender(&tss, admin_cap);
     };
     tss.end();
 }
@@ -201,7 +207,7 @@ fun test_voting_expiration() {
     {
         let admin_cap = tss.take_from_sender<AdminCap>();
 
-        add_proposal(&admin_cap, b"title", b"desc", tss.ctx());
+        new_proposal(&admin_cap, b"title", b"desc", tss.ctx());
 
         ts::return_to_sender(&tss, admin_cap);
     };
@@ -212,7 +218,7 @@ fun test_voting_expiration() {
 
         let mut test_clock = clock::create_for_testing(tss.ctx());
 
-        test_clock.set_for_testing(300000000000);
+        test_clock.set_for_testing(CExpiry);
 
         proposal.vote(true, &test_clock, tss.ctx());
 
@@ -234,7 +240,7 @@ fun test_change_proposal_status() {
     {
         let admin_cap = tss.take_from_sender<AdminCap>();
 
-        add_proposal(&admin_cap, b"title", b"desc", tss.ctx());
+        new_proposal(&admin_cap, b"title", b"desc", tss.ctx());
         ts::return_to_sender(&tss, admin_cap);
     };
 
@@ -274,7 +280,7 @@ fun test_change_proposal_status() {
 
 //EEmptyInventory: u64 = 3 from take_from_sender or take_from_address
 #[test, expected_failure(abort_code = ts::EEmptyInventory)]
-fun test_remove_proposal() {
+fun test_delete_proposal() {
     let admin = @0xAd;
 
     let mut tss = ts::begin(admin);
@@ -286,7 +292,7 @@ fun test_remove_proposal() {
     {
         let admin_cap = tss.take_from_sender<AdminCap>();
 
-        add_proposal(&admin_cap, b"title", b"desc", tss.ctx());
+        new_proposal(&admin_cap, b"title", b"desc", tss.ctx());
         ts::return_to_sender(&tss, admin_cap);
     };
 
@@ -296,11 +302,11 @@ fun test_remove_proposal() {
 
         let admin_cap = tss.take_from_sender<AdminCap>();
 
-        proposal.remove(&admin_cap);
+        proposal.delete(&admin_cap);
         tss.return_to_sender(admin_cap);
     };
 
-    //take removed object
+    //take deleted object
     tss.next_tx(admin);
     {
         let proposal = tss.take_shared<Proposal>();

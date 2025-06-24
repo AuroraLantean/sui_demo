@@ -29,7 +29,7 @@ public struct Proposal has key {
 }
 
 // === Admin Functions ===
-public fun add(
+public fun new(
     _admin_cap: &AdminCap,
     title: String,
     description: String,
@@ -52,7 +52,7 @@ public fun add(
     id
 }
 
-public fun remove(self: Proposal, _admin_cap: &AdminCap) {
+public fun delete(self: Proposal, _admin_cap: &AdminCap) {
     let Proposal {
         id,
         title: _,
@@ -156,7 +156,7 @@ fun issue_vote_proof(proposal: &Proposal, vote_boo: bool, ctx: &mut TxContext) {
     let mut name = b"NFT ".to_string();
     name.append(proposal.title);
 
-    let mut description = b"Proof of votting on ".to_string();
+    let mut description = b"Proof of voting on ".to_string();
     let proposal_address = object::id_address(proposal).to_string();
     description.append(proposal_address);
 
