@@ -1,5 +1,5 @@
 #[test_only]
-module package_addr::proposal_box_test;//must match this file name
+module package_addr::proposal_box_test;
 
 use sui::test_scenario as ts;
 use sui::clock;

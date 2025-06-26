@@ -161,8 +161,8 @@ fun issue_vote_proof(proposal: &Proposal, vote_boo: bool, ctx: &mut TxContext) {
     description.append(proposal_address);
 
     //new_unsafe_from_bytes(b"data:image/jpeg;base64,YOUR_BASE64_STRING");
-    let vote_yes_image = new_unsafe_from_bytes(b"https://thrangra.sirv.com/vote_yes_nft.jpg");
-    let vote_no_image = new_unsafe_from_bytes(b"https://thrangra.sirv.com/vote_no_nft.jpg");
+    let vote_yes_image = new_unsafe_from_bytes(b"https://dukudama.sirv.com/Images/vote_yes_nft.jpg");
+    let vote_no_image = new_unsafe_from_bytes(b"https://dukudama.sirv.com/Images/vote_no_nft.jpg");
 
     let url = if (vote_boo) { vote_yes_image } else { vote_no_image };
 

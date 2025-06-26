@@ -1,6 +1,7 @@
-debug/
-target/
+debug
+target
 aarchives
+tokenImages
 build
 examples
 .aptos

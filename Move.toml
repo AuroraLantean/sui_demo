@@ -21,7 +21,7 @@ edition = "2024.beta"
 # Named addresses will be accessible in Move as `@name`
 #package_addr = "004d04754adaa8ffadd51a8542bc286b536f4f7954d7336afe09e45157f62c25"
 package_addr = "0x0"
-#alice = "0xA11CE"
+community_wallet = "0x002"
 
 [dev-addresses]
 # The dev-addresses section allows overwriting named addresses for the `--test` and `--dev` mode. You can introduce test-only dependencies here.
