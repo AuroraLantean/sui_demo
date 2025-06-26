@@ -1,4 +1,4 @@
-module package_addr::proposal_box;//must match this file name
+module package_addr::proposal_box;
 
 use sui::types;
 const EDuplicateProposal: u64 = 0;
@@ -16,7 +16,7 @@ public fun proposals_ids(self: &ProposalBox): &vector<ID> {
 public struct AdminCap has key {
     id: UID,
 }
-public struct PROPOSAL_BOX has drop {}
+public struct PROPOSAL_BOX has drop {}//must be capitalized of this module name
 
 fun init(otw: PROPOSAL_BOX, ctx: &mut TxContext) {
     new_shared_obj(otw, ctx);

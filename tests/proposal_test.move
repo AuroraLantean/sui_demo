@@ -116,7 +116,7 @@ fun test_new_proposal_with_admin_cap() {
     {
         let vote_proof = tss.take_from_sender<VoteProofNFT>();
 
-        assert!(vote_proof.vote_proof_url().inner_url() == b"https://thrangra.sirv.com/vote_yes_nft.jpg".to_ascii_string(), EWrongNftUrl);
+        assert!(vote_proof.vote_proof_url().inner_url() == b"https://dukudama.sirv.com/Images/vote_yes_nft.jpg".to_ascii_string(), EWrongNftUrl);
 
         tss.return_to_sender(vote_proof);
     };
