@@ -343,6 +343,59 @@ fun test_mint_overflow() {
     };
     sce.end();
 }
+
+
+#[test, expected_failure(abort_code = ETokenLocked)]
+fun test_withdraw_locked_before_unlock() {
+    let admin = @0x11;
+    let bob = @0xB0;
+
+    let mut sce = test_scenario::begin(admin);
+    {
+        let otw = DRAGON{};
+        init(otw, sce.ctx());
+    };
+
+    sce.next_tx(admin);
+    {
+        let mut mint_cap = sce.take_from_sender<MintCapability>();
+
+        let duration = 5000;
+        let test_clock = clock::create_for_testing(sce.ctx()); // 0 + 5000
+
+        mint_locked(
+            &mut mint_cap,
+            100_000_000_000_000_000,
+            bob,
+            duration,
+            &test_clock,
+            sce.ctx()
+        );
+
+        assert!(mint_cap.total_minted == TOTAL_SUPPLY, EInvalidAmount);
+
+        sce.return_to_sender(mint_cap);
+        test_clock.destroy_for_testing();
+    };
+
+    sce.next_tx(bob);
+    {
+        let locker = sce.take_from_sender<Locker>();
+
+        let duration = 4999;
+        let mut test_clock = clock::create_for_testing(sce.ctx()); // 0
+
+        test_clock.set_for_testing(duration);
+
+        withdraw_locked(
+            locker,
+            &test_clock,
+            sce.ctx()
+        );
+        test_clock.destroy_for_testing();
+    };
+    sce.end();
+}
 /*// === Tests ===
 #[test_only] use sui::coin::value;
 #[test_only] use std::string::utf8;
