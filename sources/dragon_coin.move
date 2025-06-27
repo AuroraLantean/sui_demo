@@ -284,6 +284,65 @@ fun test_lock_tokens() {
     };
     sce.end();
 }
+
+
+//Lock more than expected amount
+#[test, expected_failure(abort_code = ESupplyExceeded)]
+fun test_lock_overflow() {
+    let admin = @0x11;
+    let bob = @0xB0;
+
+    let mut sce = test_scenario::begin(admin);
+    {
+        let otw = DRAGON{};
+        init(otw, sce.ctx());
+    };
+
+    sce.next_tx(admin);
+    {
+        let mut mint_cap = sce.take_from_sender<MintCapability>();
+
+        let duration = 5000;
+        let test_clock = clock::create_for_testing(sce.ctx()); // 0 + 5000
+
+        mint_locked(
+            &mut mint_cap,
+            100_000_000_000_000_001,
+            bob,
+            duration,
+            &test_clock,
+            sce.ctx()
+        );
+        sce.return_to_sender(mint_cap);
+        test_clock.destroy_for_testing();
+    };
+    sce.end();
+}
+
+//Mint more than expected amount
+#[test, expected_failure(abort_code = ESupplyExceeded)]
+fun test_mint_overflow() {
+    let admin = @0x11;
+    let mut sce = test_scenario::begin(admin);
+    {
+        let otw = DRAGON{};
+        init(otw, sce.ctx());
+    };
+
+    sce.next_tx(admin);
+    {
+        let mut mint_cap = sce.take_from_sender<MintCapability>();
+
+        mint(
+            &mut mint_cap,
+            100_000_000_000_000_001,
+            sce.ctx().sender(),
+            sce.ctx()
+        );
+        sce.return_to_sender(mint_cap);
+    };
+    sce.end();
+}
 /*// === Tests ===
 #[test_only] use sui::coin::value;
 #[test_only] use std::string::utf8;
