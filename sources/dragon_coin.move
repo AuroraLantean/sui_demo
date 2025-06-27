@@ -1,37 +1,37 @@
 // from the Sui Move by Example book 
 // (https://examples.sui.io/samples/coin.html)
 // docs: https://github.com/MystenLabs/sui/tree/main/crates/sui-framework/docs/sui
-module package_addr::dragoncoin;
+module package_addr::dragon;
     
 use sui::coin::{Self, Coin, TreasuryCap, CoinMetadata};
 use sui::balance::{Balance};
-use sui::clock::Clock;
+use sui::clock::{Self, Clock};
 use sui::url::{Self, Url};
 use std::string::String;
 use std::ascii;
-// Coin type = Coin<package_object::dragoncoin::DRAGONCOIN
+// Coin type = Coin<package_object::dragoncoin::DRAGON
     
 const EInvalidAmount: u64 = 0;
 const ESupplyExceeded: u64 = 1;
 const ETokenLocked: u64 = 2;
 
 /// Make sure that the name of the type matches the module's name.
-public struct DRAGONCOIN has drop {}
+public struct DRAGON has drop {}
 
 #[test_only]
-public fun new_otw(_ctx: &mut TxContext): DRAGONCOIN {
-  DRAGONCOIN {}
+public fun new_otw(_ctx: &mut TxContext): DRAGON {
+  DRAGON {}
 }
 
 public struct MintCapability has key {
     id: UID,
-    treasury: TreasuryCap<DRAGONCOIN>,
+    treasury: TreasuryCap<DRAGON>,
     total_minted: u64,
 }
 public struct Locker has key, store {
     id: UID,
     unlock_date: u64,
-    balance: Balance<DRAGONCOIN>,
+    balance: Balance<DRAGON>,
 }
 
 const TOTAL_SUPPLY: u64 = 1_000_000_000_000_000_000;//includes decimal zeros
@@ -39,9 +39,9 @@ const INITIAL_SUPPLY: u64 = 900_000_000_000_000_000;
 //const COMMUNITY_SUPPLY: u64 = 700_000_000_000_000_000;
 
 // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/coin.md#function-create_currency
-fun init( witness: DRAGONCOIN, ctx: &mut TxContext) {
+fun init( otw: DRAGON, ctx: &mut TxContext) {
     let (treasury, metadata) = coin::create_currency(
-        witness, 
+        otw, 
         9, 
         b"DRAG", 
         b"Dragon coin", 
@@ -66,13 +66,13 @@ fun init( witness: DRAGONCOIN, ctx: &mut TxContext) {
 }
 
 #[test_only]
-public fun new( witness: DRAGONCOIN, ctx: &mut TxContext) {
-  init( witness, ctx);
+public fun new( otw: DRAGON, ctx: &mut TxContext) {
+  init( otw, ctx);
 }
 
 // https://github.com/MystenLabs/sui/blob/main/crates/sui-framework/docs/sui/coin.md#sui_coin_mint
 public fun mint(
-    //treasury_cap: &mut TreasuryCap<DRAGONCOIN>,
+    //treasury_cap: &mut TreasuryCap<DRAGON>,
     mint_cap: &mut MintCapability,
     amount: u64,
     recipient: address,
@@ -83,12 +83,12 @@ public fun mint(
 }
 fun mint_internal
 (
-    //treasury: &mut TreasuryCap<DRAGONCOIN>,
+    //treasury: &mut TreasuryCap<DRAGON>,
     mint_cap: &mut MintCapability,
     amount: u64, 
     //recipient: address,
     ctx: &mut tx_context::TxContext
-): coin::Coin<DRAGONCOIN> 
+): coin::Coin<DRAGON> 
 {
     assert!(amount > 0, EInvalidAmount);
     assert!(mint_cap.total_minted + amount <= TOTAL_SUPPLY, ESupplyExceeded);
@@ -123,55 +123,61 @@ public fun mint_locked(
     transfer::public_transfer(locker, recipient);
 }
 
-entry fun withdraw_locked(locker: &mut Locker, clock: &Clock, ctx: &mut TxContext) {
-    assert!(clock.timestamp_ms() >= locker.unlock_date, ETokenLocked);
+//pass locker without reference because we will destroy it
+entry fun withdraw_locked(locker: Locker, clock: &Clock, ctx: &mut TxContext): u64 {
+    let Locker { id, mut balance, unlock_date} = locker;
+    assert!(clock.timestamp_ms() >= unlock_date, ETokenLocked);
 
-    let locked_balance_value = locker.balance.value();
+    let locked_balance_value = balance.value();
 
     transfer::public_transfer(
-        coin::take(&mut locker.balance, locked_balance_value, ctx),
+        coin::take(&mut balance, locked_balance_value, ctx),
         ctx.sender()
     );
+    //balance.withdraw_all();
+    balance.destroy_zero();
+    object::delete(id);
+    locked_balance_value
 }
 
 public entry fun burn
 (
-    cap: &mut TreasuryCap<DRAGONCOIN>, 
-    coin: Coin<DRAGONCOIN>
+    cap: &mut TreasuryCap<DRAGON>, 
+    coin: Coin<DRAGON>
 ): u64
 {
     coin::burn(cap, coin)
 }
 
-public fun join(coin1: &mut Coin<DRAGONCOIN>, coin2: Coin<DRAGONCOIN>): &mut Coin<DRAGONCOIN> {
+public fun join(coin1: &mut Coin<DRAGON>, coin2: Coin<DRAGON>): &mut Coin<DRAGON> {
     coin::join( coin1, coin2);
     coin1
 }
 
-public fun split(coin: &mut Coin<DRAGONCOIN>, amount: u64, ctx: &mut TxContext): Coin<DRAGONCOIN> {
+public fun split(coin: &mut Coin<DRAGON>, amount: u64, ctx: &mut TxContext): Coin<DRAGON> {
     coin::split(coin, amount, ctx)
 }
 
-public fun get_total_supply(cap: & TreasuryCap<DRAGONCOIN>): u64 {
+public fun get_total_supply(cap: & TreasuryCap<DRAGON>): u64 {
   coin::total_supply(cap)
 }
-public fun get_decimals_coin(metadata: & CoinMetadata<DRAGONCOIN>): u8 {
+public fun get_decimals_coin(metadata: & CoinMetadata<DRAGON>): u8 {
   coin::get_decimals(metadata)
 }
-public fun get_name_coin(metadata: & CoinMetadata<DRAGONCOIN>): String {
+public fun get_name_coin(metadata: & CoinMetadata<DRAGON>): String {
   coin::get_name(metadata)
 }
-public fun get_symbol_coin(metadata: & CoinMetadata<DRAGONCOIN>): ascii::String {
+public fun get_symbol_coin(metadata: & CoinMetadata<DRAGON>): ascii::String {
   coin::get_symbol(metadata)
 }
-public fun get_description_coin(metadata: & CoinMetadata<DRAGONCOIN>): String {
+public fun get_description_coin(metadata: & CoinMetadata<DRAGON>): String {
   coin::get_description(metadata)
 }
-public fun get_icon_url_coin(metadata: & CoinMetadata<DRAGONCOIN>): Option<sui::url::Url> {
+public fun get_icon_url_coin(metadata: & CoinMetadata<DRAGON>): Option<sui::url::Url> {
   coin::get_icon_url(metadata)
 }
 
-public fun update_description_coin(treasury_cap: & TreasuryCap<DRAGONCOIN>, metadata: &mut CoinMetadata<DRAGONCOIN>, description_new: String) {
+public fun update_description_coin(treasury_cap: & TreasuryCap<DRAGON>, metadata: &mut CoinMetadata<DRAGON>, description_new: String) {
   coin::update_description(treasury_cap, metadata, description_new)
 }
 
@@ -180,46 +186,104 @@ use sui::test_scenario;
 
 #[test]
 fun test_init() {
-let publisher = @0x11;
-let mut scenario = test_scenario::begin(publisher);
+let admin = @0x11;
+let mut sce = test_scenario::begin(admin);
 {
-    let otw = DRAGONCOIN{};
-    init(otw, scenario.ctx());
+    let otw = DRAGON{};
+    init(otw, sce.ctx());
 };
 
-scenario.next_tx(publisher);
+sce.next_tx(admin);
 {
-    let mint_cap = scenario.take_from_sender<MintCapability>();
+    let mint_cap = sce.take_from_sender<MintCapability>();
 
-    let coins = scenario.take_from_sender<coin::Coin<DRAGONCOIN>>();
+    let coins = sce.take_from_sender<coin::Coin<DRAGON>>();
 
     assert!(mint_cap.total_minted == INITIAL_SUPPLY, EInvalidAmount);
     assert!(coins.balance().value() == INITIAL_SUPPLY, EInvalidAmount);
 
-    scenario.return_to_sender(coins);
-    scenario.return_to_sender(mint_cap);
+    sce.return_to_sender(coins);
+    sce.return_to_sender(mint_cap);
 };
 
-scenario.next_tx(publisher);
+sce.next_tx(admin);
 {
-    //let mut treasury_cap = scenario.take_from_sender<TreasuryCap<DRAGONCOIN>>();
-    let mut mint_cap = scenario.take_from_sender<MintCapability>();
+    //let mut treasury_cap = sce.take_from_sender<TreasuryCap<DRAGON>>();
+    let mut mint_cap = sce.take_from_sender<MintCapability>();
     mint(
         &mut mint_cap,
         100_000_000_000_000_000,
-        scenario.ctx().sender(),
-        scenario.ctx()
+        sce.ctx().sender(),
+        sce.ctx()
     );
 
     assert!(mint_cap.total_minted == TOTAL_SUPPLY, EInvalidAmount);
-    //scenario.return_to_sender(treasury_cap);
-    scenario.return_to_sender(mint_cap);
+    //sce.return_to_sender(treasury_cap);
+    sce.return_to_sender(mint_cap);
 };
-
-
-scenario.end();
+sce.end();
 }
 
+
+#[test]
+fun test_lock_tokens() {
+    let admin = @0x11;
+    let bob = @0xB0;
+
+    let mut sce = test_scenario::begin(admin);
+    {
+        let otw = DRAGON{};
+        init(otw, sce.ctx());
+    };
+
+    sce.next_tx(admin);
+    {
+        let mut mint_cap = sce.take_from_sender<MintCapability>();
+
+        let duration = 5000;//in mimisec
+        let test_clock = clock::create_for_testing(sce.ctx()); // 0 + 5000
+
+        mint_locked(
+            &mut mint_cap,
+            100_000_000_000_000_000,
+            bob,
+            duration,
+            &test_clock,
+            sce.ctx()
+        );
+        assert!(mint_cap.total_minted == TOTAL_SUPPLY, EInvalidAmount);
+
+        sce.return_to_sender(mint_cap);
+        test_clock.destroy_for_testing();
+    };
+
+    sce.next_tx(bob);
+    {
+        let locker = sce.take_from_sender<Locker>();
+
+        let duration = 5000;
+
+        let mut test_clock = clock::create_for_testing(sce.ctx()); // 0
+
+        test_clock.set_for_testing(duration);
+
+        let amount = withdraw_locked(
+            locker,
+            &test_clock,
+            sce.ctx()
+        );
+        assert!(amount == 100_000_000_000_000_000, EInvalidAmount);
+        test_clock.destroy_for_testing();
+    };
+
+    sce.next_tx(bob);
+    {
+        let coin = sce.take_from_sender<coin::Coin<DRAGON>>();
+        assert!(coin.balance().value() == 100_000_000_000_000_000, EInvalidAmount);
+        sce.return_to_sender(coin);
+    };
+    sce.end();
+}
 /*// === Tests ===
 #[test_only] use sui::coin::value;
 #[test_only] use std::string::utf8;
@@ -234,13 +298,13 @@ let user1: address = @0x001;
 let mut tss = begin(admin);
 //let sn = &mut tss;
 {
-  init(DRAGONCOIN{}, tss.ctx());
+  init(DRAGON{}, tss.ctx());
 };
 let amount = 1000;
 //check the cap
 tss.next_tx(admin);
 {
-  let mut cap = tss.take_from_sender<TreasuryCap<DRAGONCOIN>>();
+  let mut cap = tss.take_from_sender<TreasuryCap<DRAGON>>();
   let total_supply = get_total_supply(&cap);
   pp(&total_supply);
   assert!(total_supply == 0, 1);
@@ -255,22 +319,22 @@ tss.next_tx(admin);
 
 tss.next_tx( user1);
 {
-  let coin = tss.take_from_sender<Coin<DRAGONCOIN>>();//
+  let coin = tss.take_from_sender<Coin<DRAGON>>();//
   pp(&value(&coin));
   assert!(value(&coin) == amount, 1);
   //tss.return_to_sender(sn, coin);
 
-  let mut cap = tss.take_from_address<TreasuryCap<DRAGONCOIN>>( admin);
+  let mut cap = tss.take_from_address<TreasuryCap<DRAGON>>( admin);
   burn(&mut cap, coin);
   
-  return_to_address<TreasuryCap<DRAGONCOIN>>(admin, cap);
+  return_to_address<TreasuryCap<DRAGON>>(admin, cap);
 };
 
 //tss.next_tx(sn, user1);{	};
 //check the metadata
 tss.next_tx(admin);
 {
-  let metadata = tss.take_from_sender<CoinMetadata<DRAGONCOIN>>();
+  let metadata = tss.take_from_sender<CoinMetadata<DRAGON>>();
   let decimals = get_decimals_coin(&metadata);
   pp(&decimals);
   assert!(decimals == 6, 1);
@@ -297,8 +361,8 @@ tss.next_tx(admin);
 //update the metadata
 tss.next_tx( admin);
 {
-  let cap = tss.take_from_sender<TreasuryCap<DRAGONCOIN>>();
-  let mut metadata = tss.take_from_sender<CoinMetadata<DRAGONCOIN>>();
+  let cap = tss.take_from_sender<TreasuryCap<DRAGON>>();
+  let mut metadata = tss.take_from_sender<CoinMetadata<DRAGON>>();
   let new_description = utf8(b"new_description");
   update_description_coin(&cap, &mut metadata, new_description);
   
