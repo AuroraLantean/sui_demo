@@ -4,6 +4,7 @@ module package_addr::market;
 	use sui::coin::{Self, Coin};
 	use sui::bag::{Self, Bag};
 	use sui::table::{Self, Table};
+  //use std::debug::print;
 
 	//sui client publish --gas-budget 10000000000
 	
@@ -39,7 +40,7 @@ module package_addr::market;
 		let item_id = object::id(&item);
 		let mut listing = Listing {
 			ask, id: object::new(ctx),
-			owner: tx_context::sender(ctx),
+			owner: ctx.sender(),
 		};
 		df::add(&mut listing.id, true, item);
 		bag::add(&mut market.items, item_id, listing);
@@ -49,7 +50,7 @@ module package_addr::market;
 		market: &mut Market<COIN>,
 		item: T, ask: u64, ctx: &mut TxContext
 	){
-		assert!( df::exists_(&house_data.id, game_id), EGameDoesNotExist);
+		assert!(df::exists_(&house_data.id, game_id), EGameDoesNotExist);
 
 		df::borrow(house_data.borrow(), game_id) 
 	}*/
@@ -62,7 +63,7 @@ module package_addr::market;
 	): T {
 		let Listing { id: mut idmut, owner, ask: _ } = bag::remove(&mut market.items, item_id);
 		
-		assert!(tx_context::sender(ctx) == owner, ENotOwner);
+		assert!(ctx.sender() == owner, ENotOwner);
 		let item = df::remove(&mut idmut, true);
 		object::delete(idmut);
 		item
@@ -71,13 +72,13 @@ module package_addr::market;
 	// Call `delist` and transfer item to the sender
 	public entry fun delist_and_take<T: key + store, COIN>(market: &mut Market<COIN>, item_id: ID, ctx: &mut TxContext){
 		let item = delist<T, COIN>(market, item_id, ctx);
-		transfer::public_transfer(item, tx_context::sender(ctx));
+		transfer::public_transfer(item, ctx.sender());
 	}
 
 	// Internal function to buy an item using a known Listing. Payment is done in Coin<COIN>. Amount paid must match the requested amount. Item seller gets the payment.
 	fun buy<T: key + store, COIN>(market: &mut Market<COIN>, item_id: ID, paid: Coin<COIN>): T {
 		let Listing {
-			id, ask, owner
+			mut id, ask, owner
 		} = bag::remove(&mut market.items, item_id);
 		
 		assert!(ask == coin::value(&paid), EAmountIncorrect);
@@ -89,26 +90,27 @@ module package_addr::market;
 		} else {
 			table::add(&mut market.payments, owner, paid);
 		};
-		let mut idmut = id;
-		let item = df::remove(&mut idmut, true);
-		object::delete(idmut);
+		let item = df::remove(&mut id, true);
+		object::delete(id);
 		item
 	}
 	
 	// Call `buy` and transfer item to the sender
 	public entry fun buy_and_take<T: key + store, COIN>(market: &mut Market<COIN>, item_id: ID, paid: Coin<COIN>, ctx: &mut TxContext){
 		let item = buy<T, COIN>(market, item_id, paid);
-		transfer::public_transfer(item, tx_context::sender(ctx));
+		transfer::public_transfer(item, ctx.sender());
 	}
 	
 	//get sender's payemnt
 	fun get_sender_payment<COIN>(market: &mut Market<COIN>, ctx: &TxContext): Coin<COIN>{
-		table::remove<address, Coin<COIN>>(&mut market.payments, tx_context::sender(ctx))
+		table::remove<address, Coin<COIN>>(&mut market.payments, ctx.sender())
 	}
 	//take profits from selling items
 	public entry fun withdraw<COIN>(market: &mut Market<COIN>, recipient: address, ctx: &TxContext){
+    //print(&utf8(b"withdraw(1)"));
 		let coin = get_sender_payment<COIN>(market, ctx);
 		// let coin = coin::take(&mut shop.balc, amount, ctx);
+    //print(&utf8(b"withdraw(2)"));
 		transfer::public_transfer(coin, recipient);
 	}
 	
@@ -127,31 +129,33 @@ module package_addr::market;
 	public fun test_market(){
 	
 		let admin: address = @0xAd;
+		let adam: address = @0xa0;
 		let bob: address = @0xb0;
 		let item_price = 137u64;
 
-		//make NFT item
+		//admin: make a new market
     let mut sce = begin(admin);
 		{
-			pp(b"make NFT");
+			pp(b"admin: make a new market");
+			new<DRAGON>(sce.ctx());
+		};
+
+		//adam: make NFT item
+		sce.next_tx(adam);
+		{
+			pp(b"adam: make NFT");
 			nft::mint(utf8(b"nft_name"), utf8(b"description"),
 			vector[utf8(b"cat")],
 			utf8(b"nft.com"),sce.ctx());
 		};
-		
-		//make a new market
-		sce.next_tx( admin);
-		{
-			pp(b"make a new market");
-			new<DRAGON>(sce.ctx());
-		};
-
-		//list_item
+    
+		//adam: list the NFT item
 		let item_id;
-		sce.next_tx( admin);
+		sce.next_tx(adam);
 		{
-			pp(b"list_item");
+			pp(b"adam: list_the NFT item");
 			let mut market =  sce.take_shared<Market<DRAGON>>();
+
 			let nft_item = sce.take_from_sender<nft::Nft>();
 			item_id = object::id(&nft_item);
 
@@ -163,10 +167,10 @@ module package_addr::market;
 			return_shared(market);
 		};
 
-		//buy_and_take
-		sce.next_tx( bob);
+		//bob: get money, buy_and_take
+		sce.next_tx(bob);
 		{
-			pp(b"buy_and_take");
+			pp(b"bob: get money, buy_and_take");
 			let mut market =  sce.take_shared<Market<DRAGON>>();
 			
 			let coin = coin::mint_for_testing<DRAGON>(item_price, sce.ctx());
@@ -175,32 +179,33 @@ module package_addr::market;
 			return_shared(market);
 		};
 
-		//bob checks received nft item
-		sce.next_tx( bob);
+		//bob: check received nft item
+		sce.next_tx(bob);
 		{
-			pp(b"bob checks received nft item");
+			pp(b"bob: check received nft item");
 			let nft_item = sce.take_from_sender<nft::Nft>();
 			assert!(nft::url(&nft_item) == utf8(b"nft.com"), 1);
-			sce.return_to_sender( nft_item);
+			sce.return_to_sender(nft_item);
 		};
 
-		//admin calls withdraw()
-		sce.next_tx( admin);
+		//adam: withdraw payment
+		sce.next_tx(adam);
 		{
-			pp(b"admin calls withdraw()");
+			pp(b"adam: withdraw payment");
 			let mut market =  sce.take_shared<Market<DRAGON>>();
-			withdraw<DRAGON>(&mut market, admin, sce.ctx());
+
+			withdraw<DRAGON>(&mut market, adam, sce.ctx());
 			return_shared(market);
 		};
 
-		//admin checks received payment
-		sce.next_tx( admin);
+		//adam: check received payment
+		sce.next_tx(adam);
 		{
-			pp(b"admin checks received payment");
+			pp(b"adam: check received payment");
 			let coin = sce.take_from_sender<Coin<DRAGON>>();//
 			print(&coin::value(&coin));
 			assert!(coin::value(&coin) == item_price, 1);
-			sce.return_to_sender( coin);
+			sce.return_to_sender(coin);
 		};
 		sce.end();
 	}

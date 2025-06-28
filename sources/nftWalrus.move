@@ -45,8 +45,8 @@ module package_addr::nft_walrus {
     // Commit first version of `Display` to apply changes.
 		display::update_version(&mut display_obj);
 		
-		transfer::public_transfer(publisher, tx_context::sender(ctx));
-		transfer::public_transfer(display_obj, tx_context::sender(ctx));
+		transfer::public_transfer(publisher, ctx.sender());
+		transfer::public_transfer(display_obj, ctx.sender());
 	}
 
 	//Upload the NFT image at https://publish.walrus.site/ : epoc is how long the uploaded data can last. Currently 1 epoc is about 1 day; copy the walrus_blob_id and Object Id
@@ -69,7 +69,7 @@ module package_addr::nft_walrus {
 			balance: balance::zero()
 		};
 
-		transfer::transfer(nft, tx_context::sender(ctx));
+		transfer::transfer(nft, ctx.sender());
 	}
 
 	public entry fun deposit_sui(
@@ -96,7 +96,7 @@ module package_addr::nft_walrus {
 		);
 		
 		// Transfer the new coin to the transaction sender
-		transfer::public_transfer(withdrawn, tx_context::sender(ctx));
+		transfer::public_transfer(withdrawn, ctx.sender());
 	}
 	
 	//------== Getter Functions

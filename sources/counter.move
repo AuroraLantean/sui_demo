@@ -15,7 +15,7 @@ module package_addr::counter {
     transfer::share_object(Counter {
       id: object::new(ctx),
       owner: ctx.sender(),
-			//owner: tx_context::sender(ctx),
+			//owner: ctx.sender(),
       value: 0
     })
   }
@@ -29,7 +29,7 @@ module package_addr::counter {
   public fun make_user_counter(ctx: &mut TxContext) {
       transfer::share_object(Counter {
           id: object::new(ctx),
-          owner: tx_context::sender(ctx),
+          owner: ctx.sender(),
           value: 0
       })
   }

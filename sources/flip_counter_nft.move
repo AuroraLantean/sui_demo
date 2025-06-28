@@ -29,7 +29,7 @@ module package_addr::counter_nft {
   }
 
   public fun transfer_to_sender(counter: Counter, ctx: &mut TxContext) {
-    transfer::transfer(counter, tx_context::sender(ctx));
+    transfer::transfer(counter, ctx.sender());
   }
 	
   public fun count(self: &Counter): u64 {

@@ -61,7 +61,7 @@ fun init( otw: DRAGON, ctx: &mut TxContext) {
 
     //Optioin::none()
     transfer::public_freeze_object(metadata);
-    //transfer::public_transfer(metadata, tx_context::sender(ctx));
+    //transfer::public_transfer(metadata, ctx.sender());
     
     //transfer::public_transfer(treasury, ctx.sender());
     transfer::transfer(mint_cap, ctx.sender());

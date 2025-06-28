@@ -58,7 +58,7 @@ use sui::{coin::{Self, Coin}, balance::Balance, table::{Self, Table}};
     transfer::transfer(OwnerCap {
       id: object::new(ctx),
       pred_id_rb,
-    }, owner);//tx_context::sender(ctx)
+    }, owner);//ctx.sender()
 
 		let prediction = Prediction {
 			id: pred_id,

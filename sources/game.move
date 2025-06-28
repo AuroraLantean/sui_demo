@@ -15,7 +15,7 @@ module package_addr::game {
 			id: object::new(ctx),
 			sword_made: 0,
 		};
-		transfer::transfer(admin, tx_context::sender(ctx));
+		transfer::transfer(admin, ctx.sender());
 	}
 	public fun magic(sword: &Sword): u64 {
 		sword.magic

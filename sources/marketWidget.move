@@ -8,6 +8,6 @@ module package_addr::Widget {
 		let obj = Widget {
 			id: object::new(ctx)
 		};
-		transfer::transfer(obj, tx_context::sender(ctx));
+		transfer::transfer(obj, ctx.sender());
 	}
 }
