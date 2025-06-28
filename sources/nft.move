@@ -71,15 +71,15 @@ module package_addr::nft;
 		
 
 	#[test_only] use std::string::utf8;
+  #[test_only] use sui::test_scenario::{begin};
 	#[test]
 	public fun test_nft() {
-		use sui::test_scenario as ts;
 		use std::debug::print as p;
 		
 		let admin: address = @0xA;
 		let user1: address = @0x01;
 		//make sword
-    let mut sce = ts::begin(admin);
+    let mut sce = begin(admin);
 		{
 			mint(utf8(b"nft_name"), utf8(b"description"),
 			vector[utf8(b"cat"), utf8(b"hungry"), utf8(b"sleepy")],

@@ -48,6 +48,7 @@ public fun remove(self: &mut ProposalBox, _admin_cap: &AdminCap, index: u64) {
 
 
 //----------== Test
+#[test_only] use sui::test_scenario::{begin, return_shared};
 #[test_only]
 public fun issue_admin_cap(ctx: &mut TxContext) {
     transfer::transfer(
@@ -62,11 +63,10 @@ public fun new_otw(_ctx: &mut TxContext): PROPOSAL_BOX {
 
 #[test]
 fun test_module_init() {
-    use sui::test_scenario as tsce;
     let admin = @0xA;
 
     //init this module
-    let mut sce = tsce::begin(admin);
+    let mut sce = begin(admin);
     {
       let otw = PROPOSAL_BOX{};
         init(otw,sce.ctx());
@@ -77,7 +77,7 @@ fun test_module_init() {
     {
         let box = sce.take_shared<ProposalBox>();
         assert!(box.proposals_ids.is_empty());
-        tsce::return_shared(box);
+        return_shared(box);
     };
     sce.end();
 }

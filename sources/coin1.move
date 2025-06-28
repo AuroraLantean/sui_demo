@@ -33,7 +33,7 @@ public fun mint(
 }
 
 //----------== Test
-#[test_only]use sui::test_scenario;
+#[test_only] use sui::test_scenario::{begin};
 #[test_only] use sui::coin::value;
 #[test_only] use std::debug::print as pp;
 #[test_only] use std::string::{utf8};
@@ -42,7 +42,7 @@ public fun mint(
 fun test_init() {
 let admin = @0xAd;
 let _bob = @0xb0;
-let mut sce = test_scenario::begin(admin);
+let mut sce = begin(admin);
 {
     let otw = MY_COIN{};
     init(otw, sce.ctx());

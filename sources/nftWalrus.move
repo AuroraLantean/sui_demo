@@ -6,7 +6,7 @@ module package_addr::nft_walrus {
 	use sui::balance::{Self, Balance};
 	use sui::sui::SUI;  //For the sui token type
 	use sui::coin::{Self, Coin};
-	use std::string::{Self, String};
+	use std::string::{is_empty, String, utf8};
 
 	public struct NftWalrus has key, store {
 		id: UID,
@@ -25,15 +25,15 @@ module package_addr::nft_walrus {
 	//Upload the NFT image at https://publish.walrus.site/ : epoc is how long the uploaded data can last. Currently 1 epoc is about 1 day; copy the walrus_blob_id and Object Id
 	fun init(witness: NFT_WALRUS, ctx: &mut TxContext) {
 		let keys = vector[
-			string::utf8(b"name"),
-			string::utf8(b"description"),
-			string::utf8(b"image_url"),
+			utf8(b"name"),
+			utf8(b"description"),
+			utf8(b"image_url"),
 		];
 		
 		let values = vector[
-			string::utf8(b"{name}"),
-			string::utf8(b"{description}"),
-			string::utf8(b"https://aggregator.walrus-testnet.walrus.space/v1/{walrus_blob_id}")
+			utf8(b"{name}"),
+			utf8(b"{description}"),
+			utf8(b"https://aggregator.walrus-testnet.walrus.space/v1/{walrus_blob_id}")
 		];
 		
 		let publisher = package::claim(witness, ctx);
@@ -57,8 +57,8 @@ module package_addr::nft_walrus {
 		walrus_sui_object: String,
 		ctx: &mut TxContext
 	) {
-		assert!(!string::is_empty(&name), ENO_EMPTY_NAME);
-		assert!(!string::is_empty(&walrus_blob_id), ENO_EMPTY_BLOB_ID);
+		assert!(!is_empty(&name), ENO_EMPTY_NAME);
+		assert!(!is_empty(&walrus_blob_id), ENO_EMPTY_BLOB_ID);
 
 		let nft = NftWalrus {
 			id: object::new(ctx),

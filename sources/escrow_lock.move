@@ -88,7 +88,7 @@ module package_addr::escrow_lock {
 	// === Tests ===
 	#[test_only] use sui::coin::{Self, Coin};
 	#[test_only] use sui::sui::SUI;
-	#[test_only] use sui::test_scenario::{Self as ts, Scenario};
+  #[test_only] use sui::test_scenario::{begin, Scenario};
 
 	#[test_only]
 	fun test_coin(ts: &mut Scenario): Coin<SUI> {
@@ -97,7 +97,7 @@ module package_addr::escrow_lock {
 
 	#[test]
 	fun test_lock_unlock() {
-		let mut ts = ts::begin(@0xA);
+		let mut ts = begin(@0xA);
 		let coin = test_coin(&mut ts);
 
 		let (locker, keyObjId) = lock(coin, ts.ctx());
@@ -110,7 +110,7 @@ module package_addr::escrow_lock {
 	#[test]
 	#[expected_failure(abort_code = ELockKeyMismatch)]
 	fun test_lock_key_mismatch() {
-		let mut ts = ts::begin(@0xA);
+		let mut ts = begin(@0xA);
 		let coin = test_coin(&mut ts);
 		let another_coin = test_coin(&mut ts);
 		let (l, _k) = lock(coin, ts.ctx());

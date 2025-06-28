@@ -81,7 +81,7 @@ public fun mint(
     ctx: &mut TxContext
 ) {
     let coin = mint_internal( mint_cap, amount, ctx);
-    //pp(&utf8(b"mint()"));
+    //pp(b"mint()"));
     //pp(&recipient);
     //pp(&value(&coin));
     transfer::public_transfer(coin, recipient);
@@ -189,17 +189,22 @@ public fun update_description_coin(mint_cap: &mut MintCapability, metadata: &mut
 }
 
 // === Tests ===
-#[test_only] use sui::test_scenario as tsce;
+#[test_only] use sui::test_scenario::{begin, return_to_sender, return_immutable};
 #[test_only] use sui::clock;
 #[test_only] use sui::coin::value;
 #[test_only] use std::string::{utf8};
-#[test_only] use std::debug::print as pp;
+#[test_only] use std::debug::print;
+
+#[test_only]
+public fun pp(bytes: vector<u8>) {
+  print(&utf8(bytes));
+}
 
 #[test]
 fun test_init() {
 let admin = @0xAd;
 let _bob = @0xb0;
-let mut sce = tsce::begin(admin);
+let mut sce = begin(admin);
 {
     let otw = DRAGON{};
     init(otw, sce.ctx());
@@ -210,15 +215,15 @@ sce.next_tx(admin);
     let mut mint_cap = sce.take_from_sender<MintCapability>();
 
     let coin = sce.take_from_sender<Coin<DRAGON>>();
-    pp(&utf8(b"admin balc:"));
-    pp(&value(&coin));
+    pp(b"admin balc:");
+    print(&value(&coin));
     
     assert!(mint_cap.total_minted == INITIAL_SUPPLY, EInvalidAmount);
     assert!(value(&coin) == INITIAL_SUPPLY, EInvalidAmount);// coin.balance().value()
 
     let total_supply = get_total_supply(&mut mint_cap);
-    pp(&utf8(b"total_supply1"));
-    pp(&total_supply);
+    pp(b"total_supply1");
+    print(&total_supply);
     assert!(total_supply == INITIAL_SUPPLY, 111);
     sce.return_to_sender(coin);
     sce.return_to_sender(mint_cap);
@@ -228,8 +233,8 @@ sce.next_tx(admin);
 {
     let mut mint_cap = sce.take_from_sender<MintCapability>();
     let sender = sce.ctx().sender();
-    pp(&utf8(b"mint sender"));
-    pp(&sender);
+    pp(b"mint sender");
+    print(&sender);
     mint(
         &mut mint_cap,
         REMAINING,
@@ -240,13 +245,13 @@ sce.next_tx(admin);
 
     assert!(mint_cap.total_minted == TOTAL_SUPPLY, EInvalidAmount);
     let total_supply = get_total_supply(&mut mint_cap);
-    pp(&utf8(b"total_supply2"));
-    pp(&total_supply);
+    pp(b"total_supply2");
+    print(&total_supply);
     assert!(total_supply == TOTAL_SUPPLY, 111);
     
     let coin = sce.take_from_sender<Coin<DRAGON>>();
-    pp(&utf8(b"admin balc1"));
-    pp(&value(&coin));
+    pp(b"admin balc1");
+    print(&value(&coin));
     //assert!(value(&coin) == TOTAL_SUPPLY, 441); // TODO: repeated minting does not add amounts in tests
     
     sce.return_to_sender(coin);
@@ -256,7 +261,7 @@ sce.next_tx(admin);
 // sce.next_tx(bob);
 // {
 //   let coin = sce.take_from_sender<Coin<DRAGON>>();
-//   pp(&utf8(b"bob balc"));
+//   pp(b"bob balc"));
 //   pp(&value(&coin));
 //   assert!(value(&coin) == REMAINING, 442);
 //   sce.return_to_sender(coin);
@@ -265,12 +270,12 @@ sce.next_tx(admin);
 sce.next_tx(admin);
 {
   let sender = sce.ctx().sender();
-  pp(&utf8(b"sender"));
-  pp(&sender);
+  pp(b"sender");
+  print(&sender);
   let coin = sce.take_from_sender<Coin<DRAGON>>();
-  pp(&utf8(b"admin balc2"));
-  pp(&value(&coin));
-  pp(&coin.balance().value());
+  pp(b"admin balc2");
+  print(&value(&coin));
+  print(&coin.balance().value());
   //assert!(coin.balance().value() == TOTAL_SUPPLY, 442);// TODO: repeated minting does not add amounts in tests
   //assert!(value(&coin) == TOTAL_SUPPLY, 442);
   sce.return_to_sender(coin);
@@ -283,26 +288,26 @@ sce.next_tx(admin);
 {
   let metadata = sce.take_immutable<CoinMetadata<DRAGON>>();
   let decimals = get_decimals_coin(&metadata);
-  pp(&decimals);
+  print(&decimals);
   assert!(decimals == 9, 1);
 
   let name = get_name_coin(&metadata);
-  pp(&name);
+  print(&name);
   assert!(name == utf8(b"Dragon coin"), 1);
 
   let descriptn = get_description_coin(&metadata);
-  pp(&descriptn);
+  print(&descriptn);
   assert!(descriptn == utf8(b"Dragon coin is the one coin to rule them all"), 1);
 
   let url = get_icon_url_coin(&metadata).extract().inner_url();//sui::url::Url
-  pp(&url);
+  print(&url);
   assert!(url == (b"https://dukudama.sirv.com/Images/dragonGold001-512x512.png").to_ascii_string(), 1);
 
   let symbol = get_symbol_coin(&metadata);
-  pp(&symbol);
+  print(&symbol);
   assert!(symbol == (b"DRAG").to_ascii_string(), 1);
 
-  tsce::return_immutable<CoinMetadata<DRAGON>>(metadata);
+  return_immutable<CoinMetadata<DRAGON>>(metadata);
   //let new_description = utf8(b"new_description");
   //update_description_coin(&mint_cap, &mut metadata, new_description);
 };
@@ -316,7 +321,7 @@ fun test_lock_tokens() {
     let admin = @0x11;
     let bob = @0xB0;
 
-    let mut sce = tsce::begin(admin);
+    let mut sce = begin(admin);
     {
         let otw = DRAGON{};
         init(otw, sce.ctx());
@@ -378,7 +383,7 @@ fun test_lock_overflow() {
     let admin = @0x11;
     let bob = @0xB0;
 
-    let mut sce = tsce::begin(admin);
+    let mut sce = begin(admin);
     {
         let otw = DRAGON{};
         init(otw, sce.ctx());
@@ -409,7 +414,7 @@ fun test_lock_overflow() {
 #[test, expected_failure(abort_code = ESupplyExceeded)]
 fun test_mint_overflow() {
     let admin = @0x11;
-    let mut sce = tsce::begin(admin);
+    let mut sce = begin(admin);
     {
         let otw = DRAGON{};
         init(otw, sce.ctx());
@@ -436,7 +441,7 @@ fun test_withdraw_locked_before_unlock() {
     let admin = @0x11;
     let bob = @0xB0;
 
-    let mut sce = tsce::begin(admin);
+    let mut sce = begin(admin);
     {
         let otw = DRAGON{};
         init(otw, sce.ctx());
