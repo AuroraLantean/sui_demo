@@ -1,5 +1,5 @@
 /*marketplace, where users can list items for sale, buy items, and collect profits from sales.*/
-module package_addr::market {
+module package_addr::market;
 	use sui::dynamic_field as df;
 	use sui::coin::{Self, Coin};
 	use sui::bag::{Self, Bag};
@@ -114,94 +114,89 @@ module package_addr::market {
 	
 	//#[test_only]
 	//use sui::sui::SUI;
-	#[test_only]
-	use package_addr::dragon::DRAGON;
-	#[test_only]
-	use package_addr::nft;
-	#[test_only]
-	use std::string::utf8;
-
+	#[test_only] use package_addr::dragon::DRAGON;
+	#[test_only] use package_addr::nft;
+	#[test_only] use std::string::utf8;
 	#[test]
 	public fun test_market(){
-		use sui::test_scenario as ts;
+		use sui::test_scenario as tsce;
 		use std::debug::print as pp;
 		
-		let admin: address = @0xA;
-		let user1: address = @0x001;
+		let admin: address = @0xAd;
+		let bob: address = @0xb0;
 		let item_price = 137u64;
-    let mut scenario_val = ts::begin(admin);
-    let sn = &mut scenario_val;
+
 		//make NFT item
+    let mut sce = tsce::begin(admin);
 		{
 			pp(&utf8(b"make NFT"));
 			nft::mint(utf8(b"nft_name"), utf8(b"description"),
 			vector[utf8(b"cat")],
-			utf8(b"nft.com"),ts::ctx(sn));
+			utf8(b"nft.com"),sce.ctx());
 		};
 		
 		//make a new market
-		ts::next_tx(sn, admin);
+		sce.next_tx( admin);
 		{
 			pp(&utf8(b"make a new market"));
-			new<DRAGON>(ts::ctx(sn));
+			new<DRAGON>(sce.ctx());
 		};
 
 		//list_item
 		let item_id;
-		ts::next_tx(sn, admin);
+		sce.next_tx( admin);
 		{
 			pp(&utf8(b"list_item"));
-			let mut market =  ts::take_shared<Market<DRAGON>>(sn);
-			let nft_item = ts::take_from_sender<nft::Nft>(sn);
+			let mut market =  sce.take_shared<Market<DRAGON>>();
+			let nft_item = sce.take_from_sender<nft::Nft>();
 			item_id = object::id(&nft_item);
 
 			list_item<nft::Nft, DRAGON>(
 			&mut market,
 			nft_item, 
 			item_price, 
-			ts::ctx(sn));
-			ts::return_shared(market);
+			sce.ctx());
+			tsce::return_shared(market);
 		};
 
 		//buy_and_take
-		ts::next_tx(sn, user1);
+		sce.next_tx( bob);
 		{
 			pp(&utf8(b"buy_and_take"));
-			let mut market =  ts::take_shared<Market<DRAGON>>(sn);
+			let mut market =  sce.take_shared<Market<DRAGON>>();
 			
-			let coin = coin::mint_for_testing<DRAGON>(item_price, ts::ctx(sn));
+			let coin = coin::mint_for_testing<DRAGON>(item_price, sce.ctx());
 
-			buy_and_take<nft::Nft, DRAGON>(&mut market, item_id, coin, ts::ctx(sn));
-			ts::return_shared(market);
+			buy_and_take<nft::Nft, DRAGON>(&mut market, item_id, coin, sce.ctx());
+			tsce::return_shared(market);
 		};
 
-		//user1 checks received nft item
-		ts::next_tx(sn, user1);
+		//bob checks received nft item
+		sce.next_tx( bob);
 		{
-			pp(&utf8(b"user1 checks received nft item"));
-			let nft_item = ts::take_from_sender<nft::Nft>(sn);
+			pp(&utf8(b"bob checks received nft item"));
+			let nft_item = sce.take_from_sender<nft::Nft>();
 			assert!(nft::url(&nft_item) == utf8(b"nft.com"), 1);
-			ts::return_to_sender(sn, nft_item);
+			sce.return_to_sender( nft_item);
 		};
 
 		//admin calls withdraw()
-		ts::next_tx(sn, admin);
+		sce.next_tx( admin);
 		{
 			pp(&utf8(b"admin calls withdraw()"));
-			let mut market =  ts::take_shared<Market<DRAGON>>(sn);
-			withdraw<DRAGON>(&mut market, admin, ts::ctx(sn));
-			ts::return_shared(market);
+			let mut market =  sce.take_shared<Market<DRAGON>>();
+			withdraw<DRAGON>(&mut market, admin, sce.ctx());
+			tsce::return_shared(market);
 		};
 
 		//admin checks received payment
-		ts::next_tx(sn, admin);
+		sce.next_tx( admin);
 		{
 			pp(&utf8(b"admin checks received payment"));
-			let coin = ts::take_from_sender<Coin<DRAGON>>(sn);//
+			let coin = sce.take_from_sender<Coin<DRAGON>>();//
 			pp(&coin::value(&coin));
 			assert!(coin::value(&coin) == item_price, 1);
-			ts::return_to_sender(sn, coin);
+			sce.return_to_sender( coin);
 		};
-		ts::end(scenario_val);
+		sce.end();
 	}
-}

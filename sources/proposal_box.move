@@ -62,22 +62,22 @@ public fun new_otw(_ctx: &mut TxContext): PROPOSAL_BOX {
 
 #[test]
 fun test_module_init() {
-    use sui::test_scenario as ts;
+    use sui::test_scenario as tsce;
     let admin = @0xA;
 
     //init this module
-    let mut tss = ts::begin(admin);
+    let mut sce = tsce::begin(admin);
     {
       let otw = PROPOSAL_BOX{};
-        init(otw,tss.ctx());
+        init(otw,sce.ctx());
     };
 
     //check initial conditions of shared objects here, OR make read functions because the field shared objects can only be accessed within the module
-    tss.next_tx(admin);
+    sce.next_tx(admin);
     {
-        let box = tss.take_shared<ProposalBox>();
+        let box = sce.take_shared<ProposalBox>();
         assert!(box.proposals_ids.is_empty());
-        ts::return_shared(box);
+        tsce::return_shared(box);
     };
-    tss.end();
+    sce.end();
 }

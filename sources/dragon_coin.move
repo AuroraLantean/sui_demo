@@ -81,9 +81,9 @@ public fun mint(
     ctx: &mut TxContext
 ) {
     let coin = mint_internal( mint_cap, amount, ctx);
-    pp(&utf8(b"mint()"));
-    pp(&recipient);
-    pp(&value(&coin));
+    //pp(&utf8(b"mint()"));
+    //pp(&recipient);
+    //pp(&value(&coin));
     transfer::public_transfer(coin, recipient);
 }
 fun mint_internal
@@ -189,7 +189,7 @@ public fun update_description_coin(mint_cap: &mut MintCapability, metadata: &mut
 }
 
 // === Tests ===
-#[test_only] use sui::test_scenario;
+#[test_only] use sui::test_scenario as tsce;
 #[test_only] use sui::clock;
 #[test_only] use sui::coin::value;
 #[test_only] use std::string::{utf8};
@@ -199,7 +199,7 @@ public fun update_description_coin(mint_cap: &mut MintCapability, metadata: &mut
 fun test_init() {
 let admin = @0xAd;
 let _bob = @0xb0;
-let mut sce = test_scenario::begin(admin);
+let mut sce = tsce::begin(admin);
 {
     let otw = DRAGON{};
     init(otw, sce.ctx());
@@ -302,7 +302,7 @@ sce.next_tx(admin);
   pp(&symbol);
   assert!(symbol == (b"DRAG").to_ascii_string(), 1);
 
-  test_scenario::return_immutable<CoinMetadata<DRAGON>>(metadata);
+  tsce::return_immutable<CoinMetadata<DRAGON>>(metadata);
   //let new_description = utf8(b"new_description");
   //update_description_coin(&mint_cap, &mut metadata, new_description);
 };
@@ -316,7 +316,7 @@ fun test_lock_tokens() {
     let admin = @0x11;
     let bob = @0xB0;
 
-    let mut sce = test_scenario::begin(admin);
+    let mut sce = tsce::begin(admin);
     {
         let otw = DRAGON{};
         init(otw, sce.ctx());
@@ -378,7 +378,7 @@ fun test_lock_overflow() {
     let admin = @0x11;
     let bob = @0xB0;
 
-    let mut sce = test_scenario::begin(admin);
+    let mut sce = tsce::begin(admin);
     {
         let otw = DRAGON{};
         init(otw, sce.ctx());
@@ -409,7 +409,7 @@ fun test_lock_overflow() {
 #[test, expected_failure(abort_code = ESupplyExceeded)]
 fun test_mint_overflow() {
     let admin = @0x11;
-    let mut sce = test_scenario::begin(admin);
+    let mut sce = tsce::begin(admin);
     {
         let otw = DRAGON{};
         init(otw, sce.ctx());
@@ -436,7 +436,7 @@ fun test_withdraw_locked_before_unlock() {
     let admin = @0x11;
     let bob = @0xB0;
 
-    let mut sce = test_scenario::begin(admin);
+    let mut sce = tsce::begin(admin);
     {
         let otw = DRAGON{};
         init(otw, sce.ctx());
